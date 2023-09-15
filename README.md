@@ -28,12 +28,13 @@
 
 4. 此时你的网页已经可以正常操作了，点击 `Sign In`` 进行登录
 5. 登录进来之后，同样在 Console 面板下输入代码 `localStorage.getItem("privy:token")`，双引号内的那串文字就是你的 `authorization`
+   
     ![](https://i.ibb.co/Xjy2mRD/20230915000338.png)
 
-6. 接着你需要导出你的钱包私钥复制出来备用
+7. 接着你需要导出你的钱包私钥复制出来备用
     ![](https://i.ibb.co/M8QhDtS/20230915000539.png)
 
-7. 得到 `authorization` 和 `private key` 之后，下载代码
+8. 得到 `authorization` 和 `private key` 之后，下载代码
 
 ### 加密你的 `authorization` 和 `private key`
 
