@@ -47,7 +47,7 @@ const contract = getContract({
 const websocketClient = createPublicClient({
   chain: base,
   transport: webSocket(
-    "wss://base-mainnet.blastapi.io/25c22b73-6ec2-40fc-85fe-962b4462b0c5"
+    "wss://base-mainnet.blastapi.io/fe9c30fc-3bc5-4064-91e2-6ab5887f8f4d"
   ),
 });
 const BASE_SCAN_API = "GWV3I6MRRIIDB1RA4UAIYAYGJ4KCGRR5ME";
