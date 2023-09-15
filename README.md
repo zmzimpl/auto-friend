@@ -95,12 +95,15 @@ if (password1 && password2) {
 1. 安装 [Nodejs](https://nodejs.org/en/download)
 2. 下载代码
 3. 使用 cmd，将路径导航到代码文件夹下，执行 `npm install`
+   
         ![](https://i.ibb.co/G7JX1jv/20230915100955.png)
 
-4. 执行 `npm run start`，你可以看到这个界面，输入你的解密密码
+5. 执行 `npm run start`，你可以看到这个界面，输入你的解密密码
+   
         ![](https://i.ibb.co/L9bcBzV/20230915101119.png)
 
-5. 看到像这样的界面说明执行成功了
+7. 看到像这样的界面说明执行成功了
+   
         ![](https://i.ibb.co/XL30Nh6/20230915103229.png)
 
 ## 注意事项
