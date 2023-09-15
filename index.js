@@ -123,7 +123,7 @@ const main = async (wallet) => {
           )
         );
         await checkIfBuy(logs);
-      }, 1500),
+      }, 3000),
       // 每 3 秒执行一次，因为频率太高，获取推特的关注人数方法会有问题() => checkIfBuy(logs)
     });
   };
