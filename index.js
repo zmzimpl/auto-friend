@@ -148,7 +148,7 @@ const main = async (wallet) => {
         const filterLogs = logs.filter((log) => {
           return (
             parseFloat(formatEther(log.args.ethAmount)) <
-              wallet.buyLimit1.price &&
+              wallet.buyLimit2.price &&
             !wallet.blockList.some(
               (address) =>
                 address.toLowerCase() === log.args.subject.toLowerCase()
