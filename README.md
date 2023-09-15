@@ -32,9 +32,10 @@
     ![](https://i.ibb.co/Xjy2mRD/20230915000338.png)
 
 7. 接着你需要导出你的钱包私钥复制出来备用
+   
     ![](https://i.ibb.co/M8QhDtS/20230915000539.png)
 
-8. 得到 `authorization` 和 `private key` 之后，下载代码
+9. 得到 `authorization` 和 `private key` 之后，下载代码
 
 ### 加密你的 `authorization` 和 `private key`
 
