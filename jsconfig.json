@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "es2015", // 指定要使用的默认库，值为"es3","es5","es2015"...
+    "module": "commonjs", // 在生成模块代码时指定模块系统
+    "checkJs": false, // 启用javascript文件的类型检查
+    "baseUrl": "*", // 解析非相关模块名称的基础目录
+    "paths": {
+      "utils": ["utils/*"] // 指定相对于baseUrl选项计算的路径映射，使用webpack别名，智能感知路径
+    }
+  },
+  "exclude": [
+    // 要排除的文件
+    "node_modules",
+    "**/node_modules/*"
+  ],
+  "include": [
+    // 包含的文件
+    "index.js"
+  ]
+}

@@ -1,0 +1,36 @@
+[
+  {
+    "user_id": "zmzimpl",
+    "address": "your wallet address",
+    "authorization": "Use utils/encrypt.js to encrypt your authorization and then put here",
+    "pk": "Use utils/encrypt.js to encrypt your private key and then put here",
+    "whiteList": ["address you dont want to sell"],
+    "blockList": ["address you dont want to buy", "address2 you dont want to buy"],
+    "sellBenefit": 2,
+    "buyLimit1": {
+      "price": 0.0005,
+      "followers": 5000
+    },
+    "buyLimit2": {
+      "price": 0.004,
+      "followers": 40000
+    }
+  },
+  {
+    "user_id": "如果你只需要一个钱包，就删除掉这个 {} 的所有内容，以及上一个 {} 末尾的,",
+    "address": "your wallet address",
+    "authorization": "Use utils/encrypt.js to encrypt your authorization and then put here",
+    "pk": "Use utils/encrypt.js to encrypt your private key and then put here",
+    "whiteList": ["address you dont want to sell"],
+    "blockList": ["address you dont want to buy"],
+    "sellBenefit": 2,
+    "buyLimit1": {
+      "price": 0.0005,
+      "followers": 5000
+    },
+    "buyLimit2": {
+      "price": 0.004,
+      "followers": 40000
+    }
+  }
+]
