@@ -360,7 +360,7 @@ const main = async (wallet) => {
           "sec-fetch-dest": "empty",
           referer: "https://www.friend.tech/",
           "accept-language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
-          "if-none-match": 'W/"24e4-q5fI/jr731JFcPR8geGoj8C83QI"',
+          "if-none-match": wallet.ifNoneMatch,
         },
         timeout: 1000 * 5,
       });
