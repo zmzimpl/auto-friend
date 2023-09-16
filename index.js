@@ -36,7 +36,7 @@ const abi = JSON.parse(readFileSync(getDir("abi.json"), "utf-8"));
 const contractAddress = "0xcf205808ed36593aa40a44f10c7f7c2f67d4a4d4";
 const publicClient = createPublicClient({
   chain: base,
-  transport: http(),
+  transport: http("https://base-mainnet.blastapi.io/fe9c30fc-3bc5-4064-91e2-6ab5887f8f4d"),
 });
 const contract = getContract({
   address: contractAddress,
@@ -56,7 +56,7 @@ const main = async (wallet) => {
   const client = createWalletClient({
     account: privateKeyToAccount(`0x${wallet.pk}`),
     chain: base,
-    transport: http(),
+    transport: http(""),
   });
 
   const amount = 1;
