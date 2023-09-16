@@ -162,8 +162,10 @@ const main = async (wallet) => {
           if (!profile.followers) continue;
           if (
             (profile.followers > wallet.buyLimit1.followers &&
+              profile.posts_count > (wallet.buyLimit1.posts_count || 10) &&
               parseFloat(formatEther(ethAmount)) < wallet.buyLimit1.price) ||
             (profile.followers > wallet.buyLimit2.followers &&
+              profile.posts_count > (wallet.buyLimit1.posts_count || 50) &&
               parseFloat(formatEther(ethAmount)) < wallet.buyLimit2.price)
           ) {
             const price = await getBuyPrice(profile.subject);
@@ -182,9 +184,11 @@ const main = async (wallet) => {
             const ethPrice = formatEther(price);
             if (
               (profile.followers > wallet.buyLimit1.followers &&
-                parseFloat(formatEther(price)) < wallet.buyLimit1.price) ||
+                profile.posts_count > (wallet.buyLimit1.posts_count || 10) &&
+                parseFloat(formatEther(ethAmount)) < wallet.buyLimit1.price) ||
               (profile.followers > wallet.buyLimit2.followers &&
-                parseFloat(formatEther(price)) < wallet.buyLimit2.price)
+                profile.posts_count > (wallet.buyLimit1.posts_count || 50) &&
+                parseFloat(formatEther(ethAmount)) < wallet.buyLimit2.price)
             ) {
               logWork({
                 walletAddress: wallet.address,
@@ -217,12 +221,15 @@ const main = async (wallet) => {
         }
         const userInfo = await getUserInfo(username);
         console.log(
-          chalk.blue(`${username} followers ${userInfo?.followers_count}`)
+          chalk.blue(
+            `${username} followers ${userInfo?.followers_count} posts count ${userInfo.statuses_count}`
+          )
         );
         return {
           subject: subject,
           username,
           followers: userInfo?.followers_count,
+          posts_count: userInfo?.statuses_count,
         };
       } else {
         return {};
