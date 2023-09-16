@@ -244,10 +244,16 @@ const main = async (wallet) => {
   };
 
   const freshNonce = async () => {
-    const transactionCount = await publicClient.getTransactionCount({
-      address: wallet.address,
-    });
-    nonce = transactionCount;
+    try {
+      console.log("刷新 nonce...");
+      const transactionCount = await publicClient.getTransactionCount({
+        address: wallet.address,
+      });
+      nonce = transactionCount;
+    } catch (error) {
+      await sleep(2);
+      await freshNonce();
+    }
   };
 
   const refreshHoldings = async () => {
