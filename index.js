@@ -56,7 +56,7 @@ const main = async (wallet) => {
   const client = createWalletClient({
     account: privateKeyToAccount(`0x${wallet.pk}`),
     chain: base,
-    transport: http(""),
+    transport: http(),
   });
 
   const amount = 1;
