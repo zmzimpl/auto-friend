@@ -47,7 +47,11 @@
 1. 出于安全考虑，我不建议你以明文形式存储密码，代码中 `utils` 目录下提供了 `encrypt.js` 和 `decrypt.js` 进行加解密，
     - 将 `// console.log(encrypt('your key', 'password1', 'password2'));` 的注释 `//` 删掉，
     - 填充你要加密的信息和密码
-    - 执行 `npm run encrypt`，控制台输出的就是加密后的信息，把加密后的信息填入 `wallets.example.json` 即可
+    - 执行 `npm run encrypt`，控制台输出的就是加密后的信息，把加密后的 `` 和 `` 填入 `wallets.example.json` 即可
+    - 另外，上个步骤获取到的 `If-None-Match` 也要填入到 `IfNoneMatch`，注意将双引号内的双引号通过反斜杠转义一下
+
+    ![](https://i.ibb.co/DfSp4KJ/20230916141626.png)
+
 
 2. 如果你不想要加密，则删除 index.js 代码底部代码由原来的
 
@@ -91,7 +95,7 @@ if (password1 && password2) {
 
 卖出策略只有一个，每隔 30 秒会查以下你持有的 key 有没有新的买入，如果有，并且利润大于 2，则执行卖出，你可以在 `wallets.json` 中通过修改 `sellBenefit` 的值改变卖出策略，值可以是复数，比如 -99999, 可以卖出你持有的所有 key
 
-`whiteList` 是你不想要卖出的 key 的白名单，通常写自己的地址
+`whiteList` 是你不想要卖出的 key 的白名单，这里最好在启动脚本前就填上你不想卖的 key 的名单，不然只要利润大于 sellBenefit 了就会立刻卖出
 
 `blockList` 是你不想要买入的 key 的禁买名单，没有填 `[]` 即可
 
