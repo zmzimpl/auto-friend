@@ -71,7 +71,6 @@ const main = async (wallet) => {
     transport: http(),
   });
 
-  const amount = 1;
   const gasLimit = "100000";
 
   let holdings = [];
@@ -84,7 +83,7 @@ const main = async (wallet) => {
   let selling = false;
   const maxBuyPrice = getMaxPrice();
 
-  const buyShare = async (value, subjectAddress) => {
+  const buyShare = async (value, subjectAddress, amount = 1) => {
     if (buying) return;
     buying = true;
     const data = encodeFunctionData({
@@ -172,8 +171,9 @@ const main = async (wallet) => {
           const twitterInfo = {};
           const accountInfo = {};
 
+          const whitelistedUser = isWhitelisted(keyInfo);
           // if not whitelisted
-          if (!isWhitelisted(keyInfo)) {
+          if (!whitelistedUser) {
             // if has twiiter conditions
             if (shouldFetchTwitterInfo()) {
               const info = await getUserInfo(keyInfo.username);
@@ -193,11 +193,15 @@ const main = async (wallet) => {
               });
             }
           }
-          console.log({
-            ...accountInfo,
-            ...twitterInfo,
-            ...keyInfo,
-          });
+          console.log(
+            chalk.blue(
+              JSON.stringify({
+                ...accountInfo,
+                ...twitterInfo,
+                ...keyInfo,
+              })
+            )
+          );
           if (shouldFetchPrice(accountInfo, twitterInfo, keyInfo)) {
             const price = await getBuyPrice(keyInfo.subject);
             const ethPrice = parseFloat(formatEther(price));
@@ -209,7 +213,11 @@ const main = async (wallet) => {
                 subject: `${keyInfo.subject} - ${keyInfo.username}`,
                 price: ethPrice.toString(),
               });
-              await buyShare(price, keyInfo.subject);
+              await buyShare(
+                price,
+                keyInfo.subject,
+                whitelistedUser?.buyAmount
+              );
             }
           }
         }
@@ -449,7 +457,7 @@ const main = async (wallet) => {
     await watchContractTradeEvent();
   };
 
-  const getSellPrice = async (subjectAddress) => {
+  const getSellPrice = async (subjectAddress, amount = 1) => {
     const price = await contract.read.getSellPriceAfterFee({
       args: [subjectAddress, amount],
     });

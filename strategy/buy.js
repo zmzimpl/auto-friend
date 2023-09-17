@@ -12,9 +12,9 @@ const BuyStrategy = {
         // 价格
         { type: STRATEGY_TYPES.KEY_PRICE, value: 0.0004 },
         // 账户跨桥的金额
-        { type: STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT, value: 0.1 },
+        // { type: STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT, value: 0.1 },
         // 账户 nonce
-        { type: STRATEGY_TYPES.ACCOUNT_NONCE, value: 1 },
+        { type: STRATEGY_TYPES.ACCOUNT_NONCE, value: 2 },
         // 推特关注数
         { type: STRATEGY_TYPES.TWITTER_FOLLOWERS, value: 15000 },
         // 推特文章数
@@ -25,8 +25,8 @@ const BuyStrategy = {
       operator: STRATEGY_OPERATORS.AND,
       conditions: [
         { type: STRATEGY_TYPES.KEY_PRICE, value: 0.003 },
-        { type: STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT, value: 0.2 },
-        { type: STRATEGY_TYPES.ACCOUNT_NONCE, value: 1 },
+        // { type: STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT, value: 0.2 },
+        { type: STRATEGY_TYPES.ACCOUNT_NONCE, value: 2 },
         { type: STRATEGY_TYPES.TWITTER_FOLLOWERS, value: 35000 },
         { type: STRATEGY_TYPES.TWITTER_POSTS, value: 400 },
       ],
@@ -35,8 +35,8 @@ const BuyStrategy = {
       // 白名单
       type: STRATEGY_TYPES.WHITELIST,
       whitelist: [
-        { username: "zmzimpl", maxPrice: 0.0005, buyAmount: 3 },
-        { username: "elonmusk", maxPrice: 1, buyAmount: 2 },
+        { username: "zmzimpl", maxPrice: 0.0005, buyAmount: 1 },
+        { username: "elonmusk", maxPrice: 0.05, buyAmount: 2 },
       ],
     },
   ],
@@ -126,7 +126,7 @@ export const isWhitelisted = (keyInfo) => {
     (u) => u.username === keyInfo.username
   );
 
-  return user ? true : false;
+  return user;
 };
 
 export const shouldFetchPrice = (accountInfo, twitterInfo, keyInfo) => {
