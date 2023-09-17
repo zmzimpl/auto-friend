@@ -28,6 +28,16 @@ import axios from "axios";
 import chalk from "chalk";
 import pkg from "lodash";
 import readlineSync from "readline-sync";
+import { couldBeSold, getMaxPrice } from "./strategy";
+import {
+  couldBeBought,
+  isWhitelisted,
+  shouldBuy,
+  shouldFetchBridgedAmount,
+  shouldFetchNonce,
+  shouldFetchPrice,
+  shouldFetchTwitterInfo,
+} from "./strategy/buy";
 
 const { throttle } = pkg;
 
@@ -72,6 +82,7 @@ const main = async (wallet) => {
   let lastActivity;
   let intervalId;
   let selling = false;
+  const maxBuyPrice = getMaxPrice();
 
   const buyShare = async (value, subjectAddress) => {
     if (buying) return;
@@ -143,73 +154,62 @@ const main = async (wallet) => {
     }
   };
 
-  const shouldFetchPrice = (profile, ethAmount) => {
-    const ethValue = parseFloat(formatEther(ethAmount));
-
-    const isLimit1Met =
-      profile.followers > wallet.buyLimit1.followers &&
-      profile.posts_count > (wallet.buyLimit1.posts_count || 10) &&
-      ethValue < wallet.buyLimit1.price;
-
-    const isLimit2Met =
-      profile.followers > wallet.buyLimit2.followers &&
-      profile.posts_count > (wallet.buyLimit2.posts_count || 50) &&
-      ethValue < wallet.buyLimit2.price;
-
-    return isLimit1Met || isLimit2Met;
-  };
-
   const checkIfBuy = async (logs) => {
     if (buying) return;
-
     if (logs instanceof Array && logs.length > 0) {
       try {
         const filterLogs = logs.filter(
           (log) =>
-            parseFloat(formatEther(log.args.ethAmount)) <
-              wallet.buyLimit2.price &&
-            !wallet.blockList.some(
-              (address) =>
-                address.toLowerCase() === log.args.subject.toLowerCase()
-            )
+            parseFloat(formatEther(log.args.ethAmount)) < maxBuyPrice &&
+            couldBeBought(log.args.subject)
         );
-
         for (const log of filterLogs) {
-          const profile = await fetchProfile(log.args.subject);
-          if (!profile.followers) continue;
+          const keyInfo = await fetchProfile(log.args.subject);
+          if (!keyInfo.username) continue;
+          const ethAmount = log.args.ethAmount;
+          const previousETHPrice = parseFloat(formatEther(ethAmount));
+          keyInfo.price = previousETHPrice;
+          const twitterInfo = {};
+          const accountInfo = {};
 
-          if (shouldFetchPrice(profile, log.args.ethAmount)) {
-            const price = await getBuyPrice(profile.subject);
-            console.log(
-              chalk.cyan(
-                "user",
-                profile.username,
-                "address",
-                profile.subject,
-                "follower",
-                profile.followers,
-                "price",
-                formatEther(price)
-              )
-            );
+          // if not whitelisted
+          if (!isWhitelisted(keyInfo)) {
+            // if has twiiter conditions
+            if (shouldFetchTwitterInfo()) {
+              const info = await getUserInfo(keyInfo.username);
+              twitterInfo.followers = info.followers_count;
+              twitterInfo.posts = info.statuses_count;
+            }
 
+            if (shouldFetchBridgedAmount()) {
+              accountInfo.bridgedAmount = await getBridgedAmount(
+                keyInfo.subject
+              );
+            }
+
+            if (shouldFetchNonce()) {
+              accountInfo.nonce = await publicClient.getTransactionCount({
+                address: keyInfo.subject,
+              });
+            }
+          }
+          console.log({
+            ...accountInfo,
+            ...twitterInfo,
+            ...keyInfo,
+          });
+          if (shouldFetchPrice(accountInfo, twitterInfo, keyInfo)) {
+            const price = await getBuyPrice(keyInfo.subject);
             const ethPrice = parseFloat(formatEther(price));
-            if (
-              (profile.followers > wallet.buyLimit1.followers &&
-                profile.posts_count > (wallet.buyLimit1.posts_count || 10) &&
-                ethPrice < wallet.buyLimit1.price) ||
-              (profile.followers > wallet.buyLimit2.followers &&
-                profile.posts_count > (wallet.buyLimit2.posts_count || 50) &&
-                ethPrice < wallet.buyLimit2.price)
-            ) {
+            keyInfo.price = ethPrice; // 以最新的价格去跑策略,看下能否通过所有条件
+            if (shouldBuy(accountInfo, twitterInfo, keyInfo)) {
               logWork({
                 walletAddress: wallet.address,
                 actionName: "buy",
-                shareAddress: profile.subject,
+                subject: `${keyInfo.subject} - ${keyInfo.username}`,
                 price: ethPrice.toString(),
               });
-
-              await buyShare(price, profile.subject);
+              await buyShare(price, keyInfo.subject);
             }
           }
         }
@@ -220,7 +220,6 @@ const main = async (wallet) => {
   };
 
   const fetchProfile = async (subject, count = 0) => {
-    console.log(chalk.gray("fetch user profile..."));
     try {
       const res = await axios.get(
         `https://prod-api.kosetto.com/users/${subject}`,
@@ -234,17 +233,9 @@ const main = async (wallet) => {
           console.log("no twitter username, skip");
           return {};
         }
-        const userInfo = await getUserInfo(username);
-        console.log(
-          chalk.blue(
-            `${username} followers ${userInfo?.followers_count} posts count ${userInfo.statuses_count}`
-          )
-        );
         return {
           subject: subject,
           username,
-          followers: userInfo?.followers_count,
-          posts_count: userInfo?.statuses_count,
         };
       } else {
         return {};
@@ -343,10 +334,30 @@ const main = async (wallet) => {
     return totalCost.toString();
   };
 
+  const getBridgedAmount = async (subject) => {
+    try {
+      const transactions = await axios.get(
+        `https://api.basescan.org/api?module=account&action=txlist&address=${subject}&startblock=0&endblock=99999999&sort=asc&apikey=${BASE_SCAN_API}&page=1
+        &offset=1`,
+        {
+          timeout: 3000,
+        }
+      );
+      const bridgeTx = transactions?.data?.result?.[0];
+      if (bridgeTx) {
+        return parseFloat(formatEther(BigInt(bridgeTx.value)));
+      }
+      return 0;
+    } catch (error) {
+      await sleep(5);
+      return await getBridgedAmount();
+    }
+  };
+
   const getTransactionHistory = async () => {
     try {
       const transactions = await axios.get(
-        `https://api.basescan.org/api?module=account&action=txlist&address=${wallet.address}&startblock=0&endblock=99999999&sort=asc&apikey=${BASE_SCAN_API}`,
+        `https://api.basescan.org/api?module=account&action=txlist&address=${wallet.address}&startblock=0&endblock=99999999&sort=desc&apikey=${BASE_SCAN_API}`,
         {
           timeout: 3000,
         }
@@ -509,9 +520,7 @@ const main = async (wallet) => {
     if (
       parseFloat(ethPrice) > 0 &&
       benefit > wallet.sellBenefit &&
-      !wallet.whiteList.some(
-        (address) => address.toLowerCase() === share.subject.toLowerCase()
-      )
+      couldBeSold(wallet.address, share.subject)
     ) {
       console.log("selling", share.subject, "price", ethPrice);
       const isSold = await sellShare(share.subject, own);
@@ -556,6 +565,7 @@ const main = async (wallet) => {
     if (intervalId !== undefined) {
       clearInterval(intervalId);
     }
+    console.log("maxBuyPrice", maxBuyPrice);
     await refreshHoldings();
     await checkIfSell();
     await watchContractTradeEvent();

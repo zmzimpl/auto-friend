@@ -50,7 +50,7 @@ async function getTwitterUserInfo(username) {
     if (userInfo) {
       return userInfo;
     }
-    return null;
+    return {};
   } catch (error) {
     console.log("getTwitterUserInfo failed", error.message);
     if (browserProcess?.pid) {
@@ -58,7 +58,7 @@ async function getTwitterUserInfo(username) {
     }
     if (browser) {
       await browser.close();
-      return null;
+      return {};
     }
   }
 }

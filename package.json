@@ -24,6 +24,7 @@
   },
   "contributors": [],
   "scripts": {
+    "test": "mocha --no-warnings --experimental-specifier-resolution=node",
     "start": "node --no-warnings --experimental-specifier-resolution=node index.js",
     "encrypt": "node --no-warnings --experimental-specifier-resolution=node utils/encrypt.js"
   },
@@ -43,5 +44,8 @@
     "socks-proxy-agent": "^8.0.2",
     "viem": "^1.10.9",
     "ws": "^8.14.1"
+  },
+  "devDependencies": {
+    "mocha": "^10.2.0"
   }
 }
