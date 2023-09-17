@@ -28,7 +28,7 @@ import axios from "axios";
 import chalk from "chalk";
 import pkg from "lodash";
 import readlineSync from "readline-sync";
-import { couldBeSold, getMaxPrice } from "./strategy";
+import { couldBeSold, getMaxPrice, sellBenefit } from "./strategy";
 import {
   couldBeBought,
   isWhitelisted,
@@ -519,7 +519,7 @@ const main = async (wallet) => {
     }
     if (
       parseFloat(ethPrice) > 0 &&
-      benefit > wallet.sellBenefit &&
+      benefit > sellBenefit &&
       couldBeSold(wallet.address, share.subject)
     ) {
       console.log("selling", share.subject, "price", ethPrice);

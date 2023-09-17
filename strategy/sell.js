@@ -21,15 +21,19 @@ const sellStrategy = {
     },
   ],
 };
+// 卖出策略还未完善...先还是按照原来的方式固定一个值
+export const sellBenefit = 10;
 
 /** 不自动出售的名单 */
 const notSellList = [];
 
 export const couldBeSold = (walletAddress, subject) => {
-    const isIn = notSellList.some(address => address.toLowerCase() === subject.toLowerCase());
-    if (walletAddress.toLowerCase() === subject.toLowerCase() || isIn) {
-        return false;
-    } else {
-        return true;
-    }
+  const isIn = notSellList.some(
+    (address) => address.toLowerCase() === subject.toLowerCase()
+  );
+  if (walletAddress.toLowerCase() === subject.toLowerCase() || isIn) {
+    return false;
+  } else {
+    return true;
+  }
 };

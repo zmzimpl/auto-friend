@@ -1,2 +1,2 @@
 export { isWhitelisted, shouldFetchPrice, shouldBuy, getMaxPrice, couldBeBought } from "./buy";
-export { couldBeSold } from "./sell";
+export { couldBeSold, sellBenefit } from "./sell";
