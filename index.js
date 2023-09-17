@@ -36,7 +36,9 @@ const abi = JSON.parse(readFileSync(getDir("abi.json"), "utf-8"));
 const contractAddress = "0xcf205808ed36593aa40a44f10c7f7c2f67d4a4d4";
 const publicClient = createPublicClient({
   chain: base,
-  transport: http("https://base-mainnet.blastapi.io/fe9c30fc-3bc5-4064-91e2-6ab5887f8f4d"),
+  transport: http(
+    "https://base-mainnet.blastapi.io/fe9c30fc-3bc5-4064-91e2-6ab5887f8f4d"
+  ),
 });
 const contract = getContract({
   address: contractAddress,
@@ -141,66 +143,79 @@ const main = async (wallet) => {
     }
   };
 
+  const shouldFetchPrice = (profile, ethAmount) => {
+    const ethValue = parseFloat(formatEther(ethAmount));
+
+    const isLimit1Met =
+      profile.followers > wallet.buyLimit1.followers &&
+      profile.posts_count > (wallet.buyLimit1.posts_count || 10) &&
+      ethValue < wallet.buyLimit1.price;
+
+    const isLimit2Met =
+      profile.followers > wallet.buyLimit2.followers &&
+      profile.posts_count > (wallet.buyLimit2.posts_count || 50) &&
+      ethValue < wallet.buyLimit2.price;
+
+    return isLimit1Met || isLimit2Met;
+  };
+
   const checkIfBuy = async (logs) => {
     if (buying) return;
+
     if (logs instanceof Array && logs.length > 0) {
       try {
-        const filterLogs = logs.filter((log) => {
-          return (
+        const filterLogs = logs.filter(
+          (log) =>
             parseFloat(formatEther(log.args.ethAmount)) <
               wallet.buyLimit2.price &&
             !wallet.blockList.some(
               (address) =>
                 address.toLowerCase() === log.args.subject.toLowerCase()
             )
-          );
-        });
-        for (let index = 0; index < filterLogs.length; index++) {
-          const log = filterLogs[index];
-          const ethAmount = log.args.ethAmount;
+        );
+
+        for (const log of filterLogs) {
           const profile = await fetchProfile(log.args.subject);
           if (!profile.followers) continue;
-          if (
-            (profile.followers > wallet.buyLimit1.followers &&
-              profile.posts_count > (wallet.buyLimit1.posts_count || 10) &&
-              parseFloat(formatEther(ethAmount)) < wallet.buyLimit1.price) ||
-            (profile.followers > wallet.buyLimit2.followers &&
-              profile.posts_count > (wallet.buyLimit1.posts_count || 50) &&
-              parseFloat(formatEther(ethAmount)) < wallet.buyLimit2.price)
-          ) {
+
+          if (shouldFetchPrice(profile, log.args.ethAmount)) {
             const price = await getBuyPrice(profile.subject);
             console.log(
               chalk.cyan(
                 "user",
                 profile.username,
-                " address",
+                "address",
                 profile.subject,
-                " follower",
+                "follower",
                 profile.followers,
                 "price",
                 formatEther(price)
               )
             );
-            const ethPrice = formatEther(price);
+
+            const ethPrice = parseFloat(formatEther(price));
             if (
               (profile.followers > wallet.buyLimit1.followers &&
                 profile.posts_count > (wallet.buyLimit1.posts_count || 10) &&
-                parseFloat(formatEther(ethAmount)) < wallet.buyLimit1.price) ||
+                ethPrice < wallet.buyLimit1.price) ||
               (profile.followers > wallet.buyLimit2.followers &&
-                profile.posts_count > (wallet.buyLimit1.posts_count || 50) &&
-                parseFloat(formatEther(ethAmount)) < wallet.buyLimit2.price)
+                profile.posts_count > (wallet.buyLimit2.posts_count || 50) &&
+                ethPrice < wallet.buyLimit2.price)
             ) {
               logWork({
                 walletAddress: wallet.address,
                 actionName: "buy",
                 shareAddress: profile.subject,
-                price: ethPrice,
+                price: ethPrice.toString(),
               });
+
               await buyShare(price, profile.subject);
             }
           }
         }
-      } catch (error) {}
+      } catch (error) {
+        console.error("Error during buying process:", error);
+      }
     }
   };
 
