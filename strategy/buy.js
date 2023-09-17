@@ -35,8 +35,8 @@ const BuyStrategy = {
       // 白名单
       type: STRATEGY_TYPES.WHITELIST,
       whitelist: [
-        { username: "zmzimpl", maxPrice: 0.0005, buyAmount: 1 },
-        { username: "elonmusk", maxPrice: 1, buyAmount: 0.05 },
+        { username: "zmzimpl", maxPrice: 0.0005, buyAmount: 3 },
+        { username: "elonmusk", maxPrice: 1, buyAmount: 2 },
       ],
     },
   ],
