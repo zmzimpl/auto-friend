@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync, promises } from "fs";
 import {
   getUserInfo,
   getDir,
@@ -129,27 +129,46 @@ const main = async (wallet) => {
       abi: abi,
       eventName: "Trade",
       onLogs: throttle(async (logs) => {
-        // console.log(
-        //   chalk.gray(
-        //     `Block number: ${logs[0].blockNumber}, Check to see if purchase conditions are met...`
-        //   )
-        // );
+        console.log(
+          chalk.gray(
+            `Block number: ${logs[0].blockNumber}, Check to see if purchase conditions are met...`
+          )
+        );
         await checkIfBuy(logs);
       }, 3000),
       // 每 3 秒执行一次，因为频率太高，获取推特的关注人数方法会有问题() => checkIfBuy(logs)
     });
   };
 
-  const getBuyPrice = async (subjectAddress) => {
+  const getBuyPrice = async (subjectAddress, amount = 1) => {
     console.log(chalk.gray("get buy price...", subjectAddress));
     try {
       const price = await contract.read.getBuyPriceAfterFee({
         args: [subjectAddress, amount],
       });
-      return price > 0 ? price : await getBuyPrice(subjectAddress);
+      return price > 0 ? price : await getBuyPrice(subjectAddress, amount);
     } catch (error) {
       console.log("get buy price failed", error);
-      return await getBuyPrice(subjectAddress);
+      return await getBuyPrice(subjectAddress, amount);
+    }
+  };
+
+  const checkAndUpdateBotJSON = async (subject) => {
+    try {
+      // 读取 bot.json 文件
+      const data = await promises.readFile("bots.json", "utf8");
+      const botData = JSON.parse(data);
+
+      // 判断是否为数组并且 keyInfo.subject 是否已经存在其中
+      if (Array.isArray(botData) && !botData.includes(subject)) {
+        botData.push(subject);
+
+        // 写回更新后的数据
+        await promises.writeFile("bots.json", JSON.stringify(botData, null, 2));
+        console.log(`Added ${subject} to bots.json`);
+      }
+    } catch (error) {
+      console.error("Error updating bots.json:", error);
     }
   };
 
@@ -191,22 +210,28 @@ const main = async (wallet) => {
               accountInfo.nonce = await publicClient.getTransactionCount({
                 address: keyInfo.subject,
               });
+              if (accountInfo.nonce > 200) {
+                console.log(`nonce: ${accountInfo.nonce}`);
+                await checkAndUpdateBotJSON(keyInfo.subject);
+              }
             }
           }
-          console.log(
-            chalk.blue(
-              JSON.stringify({
-                ...accountInfo,
-                ...twitterInfo,
-                ...keyInfo,
-              })
-            )
-          );
           if (shouldFetchPrice(accountInfo, twitterInfo, keyInfo)) {
-            const price = await getBuyPrice(keyInfo.subject);
+            const price = await getBuyPrice(
+              keyInfo.subject,
+              whitelistedUser?.buyAmount
+            );
             const ethPrice = parseFloat(formatEther(price));
-            console.log(chalk.blue("lastPrice: ", ethPrice));
             keyInfo.price = ethPrice; // 以最新的价格去跑策略,看下能否通过所有条件
+            console.log(
+              chalk.blueBright(
+                JSON.stringify({
+                  ...accountInfo,
+                  ...twitterInfo,
+                  ...keyInfo,
+                })
+              )
+            );
             if (shouldBuy(accountInfo, twitterInfo, keyInfo)) {
               logWork({
                 walletAddress: wallet.address,

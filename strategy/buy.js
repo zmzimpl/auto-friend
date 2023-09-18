@@ -10,7 +10,7 @@ const BuyStrategy = {
       operator: STRATEGY_OPERATORS.AND,
       conditions: [
         // 价格
-        { type: STRATEGY_TYPES.KEY_PRICE, value: 0.0004 },
+        { type: STRATEGY_TYPES.KEY_PRICE, value: 0.002 },
         // 账户跨桥的金额
         { type: STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT, value: 0.1 },
         // 账户 nonce
@@ -24,7 +24,7 @@ const BuyStrategy = {
     {
       operator: STRATEGY_OPERATORS.AND,
       conditions: [
-        { type: STRATEGY_TYPES.KEY_PRICE, value: 0.003 },
+        { type: STRATEGY_TYPES.KEY_PRICE, value: 0.004 },
         { type: STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT, value: 0.2 },
         { type: STRATEGY_TYPES.ACCOUNT_NONCE, value: 5 },
         { type: STRATEGY_TYPES.TWITTER_FOLLOWERS, value: 35000 },
