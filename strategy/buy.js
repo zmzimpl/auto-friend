@@ -1,4 +1,7 @@
 import { STRATEGY_OPERATORS, STRATEGY_TYPES } from "../constants";
+import { promises } from "fs";
+import { getDir } from "../utils";
+import chalk from "chalk";
 
 /**
  * 购买策略
@@ -51,10 +54,38 @@ const notBuyList = [
   "0xf7b1cd33b199ee0831fa0c984fdae0955d47f2f6",
 ];
 
+/** 不用管这个变量，但不要删除，用来定时读取 bots 名单做过滤的 */
+let bots = [];
+
 export const couldBeBought = (subject) => {
-  const isIn = notBuyList.some(address => address.toLowerCase() === subject.toLowerCase());
-  return !isIn;
-}
+  const isInBlockList = notBuyList.concat(bots).some((address) => {
+    const isBlock = address.toLowerCase() === subject.toLowerCase();
+    if (isBlock) {
+      console.log(chalk.yellow(`${subject} 在不购买名单内，跳过`));
+    }
+    return isBlock;
+  });
+  return !isInBlockList;
+};
+
+const readBotJSON = async () => {
+  try {
+    const data = await promises.readFile(getDir("bots.json"), "utf8");
+    bots = JSON.parse(data);
+
+    if (Array.isArray(bots)) {
+      console.log(`已经将 ${bots.length} 个 bot 名单列入不购买名单`);
+    }
+  } catch (error) {
+    console.error("Error reading bots.json:", error);
+  }
+};
+
+// Read bots.json immediately upon starting the script
+readBotJSON();
+
+// Set an interval to read bots.json every 30 minutes (1800000 milliseconds)
+setInterval(readBotJSON, 1800000);
 
 const evaluateCondition = (condition, accountInfo, twitterInfo, keyInfo) => {
   switch (condition.type) {
