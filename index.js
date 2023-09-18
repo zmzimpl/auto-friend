@@ -549,6 +549,11 @@ const main = async (wallet) => {
       const transaction = await publicClient.waitForTransactionReceipt({
         hash,
       });
+      console.log(
+        chalk[transaction.status === "success" ? "green" : "red"](
+          `Sell ${subjectAddress} ${transaction.status}`
+        )
+      );
       if (transaction.status === "success") {
         return true;
       } else {
