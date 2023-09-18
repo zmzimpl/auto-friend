@@ -171,7 +171,6 @@ const sellStrategy = {
    * 1： 利润 > 10 USD
    * 2.  持有时间超过 240 个小时
    * 
-   * 
    * 1，2 使用 OR 连接，即满足其中一个即卖出
    * 
    * specifies：当地址 0x634b5B0D940f6A4C48d5E6180a47EBb543a23F46 利润超过 100 USD 并且持有时长超过 24 小时，才* 会卖出 0x634b5B0D940f6A4C48d5E6180a47EBb543a23F46
