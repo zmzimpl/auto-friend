@@ -28,7 +28,7 @@ import axios from "axios";
 import chalk from "chalk";
 import pkg from "lodash";
 import readlineSync from "readline-sync";
-import { couldBeSold, getMaxPrice, sellBenefit } from "./strategy";
+import { couldBeSold, getMaxPrice } from "./strategy";
 import {
   couldBeBought,
   isWhitelisted,
@@ -38,6 +38,7 @@ import {
   shouldFetchPrice,
   shouldFetchTwitterInfo,
 } from "./strategy/buy";
+import { shouldSell } from "./strategy/sell";
 
 const { throttle } = pkg;
 
@@ -334,6 +335,23 @@ const main = async (wallet) => {
     }
   };
 
+  const hoursSinceCreatedAt = (timeStamp) => {
+    const createdAt = parseInt(timeStamp, 10) * 1000;
+
+    // 获取当前的 Unix 时间戳（毫秒）
+    const now = Date.now();
+
+    // 计算时间差（毫秒）
+    const differenceInMilliseconds = now - createdAt;
+
+    // 转换为小时并向下取整
+    const differenceInHours = Math.floor(
+      differenceInMilliseconds / (1000 * 60 * 60)
+    );
+
+    return differenceInHours;
+  };
+
   const mergeCosts = async (arr) => {
     const transactions = await getTransactionHistory();
     const subjectMap = {};
@@ -349,6 +367,9 @@ const main = async (wallet) => {
       const subject = args[0].toString().toLowerCase();
       if (subjectMap[subject]) {
         subjectMap[subject].cost = calculateTransactionCost(transaction);
+        subjectMap[subject].holdingDuration = hoursSinceCreatedAt(
+          transaction.timeStamp
+        );
       }
     });
     holdings = arr.filter((item) => {
@@ -363,7 +384,7 @@ const main = async (wallet) => {
     const value = BigInt(transaction.value);
 
     // 计算总成本
-    const totalCost = gasUsed * gasPrice + value;
+    const totalCost = gasUsed * gasPrice * BigInt(2) + value;
 
     return totalCost.toString();
   };
@@ -541,22 +562,25 @@ const main = async (wallet) => {
 
   const trySell = async (share) => {
     const price = await getSellPrice(share.subject);
-    console.log(share.subject, price, share.cost);
-    const ethPrice = formatEther(price).substring(0, 8);
-    const costEthPrice = formatEther(share.cost).substring(0, 8);
-    const benefit =
-      (parseFloat(ethPrice) - parseFloat(costEthPrice)) * ETH_USCT_Rate;
+    console.log(share.subject, share.name, "balance: ", share.balance);
+    const ethPrice = parseFloat(formatEther(price).substring(0, 8)) * 0.9;
+    const costEthPrice = parseFloat(formatEther(share.cost).substring(0, 8));
+    const profit = parseFloat(
+      ((ethPrice - costEthPrice) * ETH_USCT_Rate).toFixed(2)
+    );
     console.log(
-      chalk[benefit > 0 ? "green" : "yellow"]("benefit", benefit, " USDT")
+      chalk[profit > 0 ? "green" : "yellow"](
+        `profit: ${profit} USDT, holding duration: ${share.holdingDuration} hours`
+      )
     );
     const own = await checkIfOwn(share.subject);
     if (!own) {
       return false;
     }
     if (
-      parseFloat(ethPrice) > 0 &&
-      benefit > sellBenefit &&
-      couldBeSold(wallet.address, share.subject)
+      ethPrice > 0 &&
+      couldBeSold(wallet.address, share.subject) &&
+      shouldSell(share.subject, profit, share.holdingDuration)
     ) {
       console.log("selling", share.subject, "price", ethPrice);
       const isSold = await sellShare(share.subject, own);

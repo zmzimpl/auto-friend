@@ -2,6 +2,7 @@ import { STRATEGY_OPERATORS, STRATEGY_TYPES } from "../constants";
 
 /**
  * 购买策略
+ * 涉及价格，金额的单位统一为 ETH
  */
 const BuyStrategy = {
   operator: STRATEGY_OPERATORS.OR,

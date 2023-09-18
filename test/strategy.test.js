@@ -6,6 +6,7 @@ import {
   getMaxPrice,
   couldBeBought,
   couldBeSold,
+  shouldSell,
 } from "../strategy/index";
 
 describe("Strategy", () => {
@@ -117,7 +118,7 @@ describe("Strategy", () => {
       const ifShouldBuy = shouldBuy(
         { bridgedAmount: 0.21, nonce: 0 },
         { followers: 17600, posts: 272 },
-        { username: "FTDetector", price: 0.0005 }
+        { username: "FTDetector", price: 0.003 }
       );
       assert.equal(false, ifShouldBuy);
     });
@@ -160,6 +161,49 @@ describe("Strategy", () => {
         { username: "FTDetector", price: 0.0001 }
       );
       assert.equal(true, ifShouldBuy);
+    });
+  });
+
+  describe("shouldSell", () => {
+    it("Should sell if profit > 10, holding duration < 240, and not in the specify list", () => {
+      const ifShouldSell = shouldSell(
+        "0xe1c2192d4834f67d770e71482f877bbd997b659e",
+        11,
+        23
+      );
+      assert.equal(true, ifShouldSell);
+    });
+    it("Should sell if profit < 10, holding duration > 240, and not in the specify list", () => {
+      const ifShouldSell = shouldSell(
+        "0xe1c2192d4834f67d770e71482f877bbd997b659e",
+        11,
+        250
+      );
+      assert.equal(true, ifShouldSell);
+    });
+    it("Should not sell if profit < 10, holding duration < 240, and not in the specify list", () => {
+      const ifShouldSell = shouldSell(
+        "0xe1c2192d4834f67d770e71482f877bbd997b659e",
+        9,
+        23
+      );
+      assert.equal(false, ifShouldSell);
+    });
+    it("Should not sell if profit > 10, holding duration > 240, but in the specify list and not met conditions", () => {
+      const ifShouldSell = shouldSell(
+        "0x634b5B0D940f6A4C48d5E6180a47EBb543a23F46",
+        19,
+        250
+      );
+      assert.equal(false, ifShouldSell);
+    });
+    it("Should sell if profit > 10, holding duration < 240, in specify list and met conditions", () => {
+      const ifShouldSell = shouldSell(
+        "0x634b5B0D940f6A4C48d5E6180a47EBb543a23F46",
+        19,
+        25
+      );
+      assert.equal(false, ifShouldSell);
     });
   });
 });
