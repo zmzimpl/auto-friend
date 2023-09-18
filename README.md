@@ -5,10 +5,14 @@
 
 ## 功能
 
+- 限价购买策略
 - Twitter 关注数/推文数检测
-- 链上交易监控
-- 自动获利
-- 低手续费买卖
+- 按金额，nonce 评估 key 质量做筛选
+- 白名单购买策略
+- 组合策略
+- 超过多少利润自动获利
+- 指定 key 使用不同的卖出策略
+- Bot 地址筛选
 
 ## 启动前准备
 
@@ -87,17 +91,117 @@ if (password1 && password2) {
 
 3. 在填好了 `wallets.example.json` 需要的信息之后，将 `wallets.example.json` 改名 `wallets.json`
 
-## 自定义配置
+## 自定义配置 `strategy/buy` `strategy/sell`
 
-目前代码中的买入策略是关注数大于 5000 并且价格低于 0.0005 ETH 或者关注数大于 40000 并且价格低于 0.004 ETH，才会触发买入，你可以在 `wallets.json` 中调整这两个策略，如果想要增加其他策略，自行修改 `index.js` 中的 `checkIfBuy` 代码
+### 买入策略配置
 
-卖出策略只有一个，每隔 30 秒会查以下你持有的 key 有没有新的买入，如果有，并且利润大于 2，则执行卖出，你可以在 `wallets.json` 中通过修改 `sellBenefit` 的值改变卖出策略，值可以是复数，比如 -99999, 可以卖出你持有的所有 key
+```js
+/**
+ * 购买策略
+ * 涉及价格，金额的单位统一为 ETH
+ */
+const BuyStrategy = {
+  /**
+   * 策略解释：
+   * 1： 价格 < 0.002 并且 跨链金额 > 0.1 并且 账号的 nonce 数 < 5 并且 关注数 > 15000 并且 文章数 > 100
+   * 2.  价格 < 0.004 并且 跨链金额 > 0.2 并且 账号的 nonce 数 < 5 并且 关注数 > 35000 并且 文章数 > 400
+   * 3.  白名单 zmzimpl，价格 < 0.0005, 买 1 个
+   *     白名单 elonmusk，价格 < 0.05, 买 2 个
+   * 
+   * 1，2，3 三个策略使用 OR 连接，即满足其中一个即可买入
+   */
+  operator: STRATEGY_OPERATORS.OR,
+  conditions: [
+    {
+      operator: STRATEGY_OPERATORS.AND,
+      conditions: [
+        // 价格
+        { type: STRATEGY_TYPES.KEY_PRICE, value: 0.002 },
+        // 账户跨桥的金额
+        { type: STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT, value: 0.1 },
+        // 账户 nonce
+        { type: STRATEGY_TYPES.ACCOUNT_NONCE, value: 5 },
+        // 推特关注数
+        { type: STRATEGY_TYPES.TWITTER_FOLLOWERS, value: 15000 },
+        // 推特文章数
+        { type: STRATEGY_TYPES.TWITTER_POSTS, value: 100 },
+      ],
+    },
+    {
+      operator: STRATEGY_OPERATORS.AND,
+      conditions: [
+        { type: STRATEGY_TYPES.KEY_PRICE, value: 0.004 },
+        { type: STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT, value: 0.2 },
+        { type: STRATEGY_TYPES.ACCOUNT_NONCE, value: 5 },
+        { type: STRATEGY_TYPES.TWITTER_FOLLOWERS, value: 35000 },
+        { type: STRATEGY_TYPES.TWITTER_POSTS, value: 400 },
+      ],
+    },
+    {
+      // 白名单
+      type: STRATEGY_TYPES.WHITELIST,
+      whitelist: [
+        { username: "zmzimpl", maxPrice: 0.0005, buyAmount: 1 },
+        { username: "elonmusk", maxPrice: 0.05, buyAmount: 2 },
+      ],
+    },
+  ],
+};
+/** 不自动购买的地址, 可以把一些假号或者买过了知道会亏的放这里面 */
+const notBuyList = [
+  "0x769dd66767ab8569cedacc11c3165706171ca86b",
+  "0x5E305C7d68c50788a34F480BfC33c573CcE3DBDd",
+  "0xf7ebfa80d5e3854d95a87fff4f345ee3455436f2",
+  "0x82bd50ef1a7444755812b526cfbd7146cf6b46c2",
+  "0xf7b1cd33b199ee0831fa0c984fdae0955d47f2f6",
+];
 
-`whiteList` 是你不想要卖出的 key 的白名单，这里最好在启动脚本前就填上你不想卖的 key 的名单，不然只要利润大于 sellBenefit 了就会立刻卖出
+```
 
-`blockList` 是你不想要买入的 key 的禁买名单，没有填 `[]` 即可
+### 卖出配置
 
-`buyLimit1` 和 `buyLimit2` 是购买限制，比如价格 `price` 必须小于 0.0003ETH，关注数 `followers` 大于 5000，`posts_count` 推文数大于 50，才会触发购买
+```js
+/**
+ * 卖出策略
+ * 利润单位为 USD
+ */
+const sellStrategy = {
+  /**
+   * 策略解释：
+   * 1： 利润 > 10 USD
+   * 2.  持有时间超过 240 个小时
+   * 
+   * 
+   * 1，2 使用 OR 连接，即满足其中一个即卖出
+   * 
+   * specifies：当地址 0x634b5B0D940f6A4C48d5E6180a47EBb543a23F46 利润超过 100 USD 并且持有时长超过 24 小时，才* 会卖出 0x634b5B0D940f6A4C48d5E6180a47EBb543a23F46
+   */
+  operator: STRATEGY_OPERATORS.OR,
+  conditions: [
+    // 利润大于 10 USD 才卖出
+    { type: STRATEGY_TYPES.BENEFIT, value: 10 },
+    // 持有时间超过多少小时后不管盈亏直接卖出
+    { type: STRATEGY_TYPES.HOLDING_DURATION, value: 240 },
+  ],
+  specifies: [
+    {
+      addresses: ["0x634b5B0D940f6A4C48d5E6180a47EBb543a23F46"],
+      strategy: {
+        operator: STRATEGY_OPERATORS.AND,
+        // 指定某些地址利润大于 100USD 并且持有时长超过 24 小时才卖出
+        conditions: [
+          { type: STRATEGY_TYPES.BENEFIT, value: 100 },
+          { type: STRATEGY_TYPES.HOLDING_DURATION, value: 24 },
+        ],
+      },
+    },
+  ],
+};
+
+/** 不自动出售的名单 */
+const notSellList = [];
+
+```
 
 ## 脚本启动
 
