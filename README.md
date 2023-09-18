@@ -225,6 +225,30 @@ const notSellList = [];
     `sudo apt-get install ca-certificates fonts-liberation libappindicator3-1 libasound2 libatk-bridge2.0-0 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libnss3 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 lsb-release wget xdg-utils`<br>
     具体可看： <https://stackoverflow.com/questions/66214552/tmp-chromium-error-while-loading-shared-libraries-libnss3-so-cannot-open-sha>
 
+2. 一直在刷新 Nonce, 是什么问题？
+    因为现在使用的是 friendtech 的 rpc, 如果出现这个问题长时间没改善，建议自己注册一个 rpc 使用，修改代码：
+
+    ```js
+    const publicClient = createPublicClient({
+        chain: base,
+        transport: http(
+            "https://base-mainnet.blastapi.io/你的 rpc id"
+        ),
+    });
+    const contract = getContract({
+    address: contractAddress,
+    abi: abi,
+    // @ts-ignore
+    publicClient: publicClient,
+    });
+    const websocketClient = createPublicClient({
+        chain: base,
+        transport: webSocket(
+            "wss://base-mainnet.blastapi.io/你的 rpc id"
+        ),
+    });
+    ```
+
 ## 注意事项
 
 此脚本仅用于学习交流目的，不保证盈利，甚至会有亏损风险，请基于个人意愿决定是否使用。代码完全开源无后门，使用的依赖库也是都是开源库，有代码能力请自行进行审查
