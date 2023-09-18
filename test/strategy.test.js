@@ -10,23 +10,23 @@ import {
 
 describe("Strategy", () => {
   describe("GetMaxPrice", () => {
-    it("max price is 1", () => {
+    it("max price is 0.05", () => {
       const maxPrice = getMaxPrice();
-      assert.equal(1, maxPrice);
+      assert.equal(0.05, maxPrice);
     });
   });
 
   describe("isWhitelisted", () => {
     it("zmzimpl is in whitelisted", () => {
       const isInWhitelist = isWhitelisted({ username: "zmzimpl", price: 0.01 });
-      assert.equal(true, isInWhitelist);
+      assert.equal(true, Boolean(isInWhitelist));
     });
     it("FTDetector is not in whitelisted", () => {
       const isInWhitelist = isWhitelisted({
         username: "FTDetector",
         price: 1.5,
       });
-      assert.equal(false, isInWhitelist);
+      assert.equal(false, Boolean(isInWhitelist));
     });
   });
 
@@ -113,31 +113,31 @@ describe("Strategy", () => {
       );
       assert.equal(true, ifShouldBuy);
     });
-    it("Shouldn't buy FTDetector. Price > 0.0002, bridgedAmount > 0.2, nonce < 1, follower > 5000, posts > 200", () => {
+    it("Shouldn't buy FTDetector. Price > 0.0004, bridgedAmount > 0.1, nonce < 2, follower > 5000, posts > 100", () => {
       const ifShouldBuy = shouldBuy(
         { bridgedAmount: 0.21, nonce: 0 },
         { followers: 17600, posts: 272 },
-        { username: "FTDetector", price: 0.0003 }
+        { username: "FTDetector", price: 0.0005 }
       );
       assert.equal(false, ifShouldBuy);
     });
-    it("Shouldn't buy FTDetector. Price < 0.0002, bridgedAmount < 0.2, nonce < 1, follower > 5000, posts > 200", () => {
+    it("Shouldn't buy FTDetector. Price < 0.0004, bridgedAmount < 0.1, nonce < 5, follower > 5000, posts > 100", () => {
       const ifShouldBuy = shouldBuy(
-        { bridgedAmount: 0.11, nonce: 0 },
+        { bridgedAmount: 0.01, nonce: 0 },
         { followers: 17600, posts: 272 },
         { username: "FTDetector", price: 0.0001 }
       );
       assert.equal(false, ifShouldBuy);
     });
-    it("Shouldn't buy FTDetector. Price < 0.0002, bridgedAmount > 0.2, nonce > 1, follower > 5000, posts > 200", () => {
+    it("Shouldn't buy FTDetector. Price < 0.0004, bridgedAmount > 0.1, nonce > 5, follower > 5000, posts > 100", () => {
       const ifShouldBuy = shouldBuy(
-        { bridgedAmount: 0.21, nonce: 2 },
+        { bridgedAmount: 0.21, nonce: 6 },
         { followers: 17600, posts: 272 },
         { username: "FTDetector", price: 0.0001 }
       );
       assert.equal(false, ifShouldBuy);
     });
-    it("Shouldn't buy FTDetector. Price < 0.0002, bridgedAmount > 0.2, nonce < 1, follower < 5000, posts > 200", () => {
+    it("Shouldn't buy FTDetector. Price < 0.0004, bridgedAmount > 0.1, nonce < 5, follower < 5000, posts > 100", () => {
       const ifShouldBuy = shouldBuy(
         { bridgedAmount: 0.21, nonce: 0 },
         { followers: 176, posts: 272 },
@@ -145,15 +145,15 @@ describe("Strategy", () => {
       );
       assert.equal(false, ifShouldBuy);
     });
-    it("Shouldn't buy FTDetector. Price < 0.0002, bridgedAmount > 0.2, nonce < 1, follower > 5000, posts < 200", () => {
+    it("Shouldn't buy FTDetector. Price < 0.0004, bridgedAmount > 0.1, nonce < 5, follower > 5000, posts < 100", () => {
       const ifShouldBuy = shouldBuy(
         { bridgedAmount: 0.21, nonce: 0 },
-        { followers: 17600, posts: 172 },
+        { followers: 17600, posts: 72 },
         { username: "FTDetector", price: 0.0001 }
       );
       assert.equal(false, ifShouldBuy);
     });
-    it("Should buy FTDetector. Price < 0.0002, bridgedAmount > 0.2, nonce < 1, follower > 5000, posts > 200", () => {
+    it("Should buy FTDetector. Price < 0.0004, bridgedAmount > 0.1, nonce < 5, follower > 5000, posts > 100", () => {
       const ifShouldBuy = shouldBuy(
         { bridgedAmount: 0.21, nonce: 0 },
         { followers: 17600, posts: 210 },

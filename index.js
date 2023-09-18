@@ -129,11 +129,11 @@ const main = async (wallet) => {
       abi: abi,
       eventName: "Trade",
       onLogs: throttle(async (logs) => {
-        console.log(
-          chalk.gray(
-            `Block number: ${logs[0].blockNumber}, Check to see if purchase conditions are met...`
-          )
-        );
+        // console.log(
+        //   chalk.gray(
+        //     `Block number: ${logs[0].blockNumber}, Check to see if purchase conditions are met...`
+        //   )
+        // );
         await checkIfBuy(logs);
       }, 3000),
       // 每 3 秒执行一次，因为频率太高，获取推特的关注人数方法会有问题() => checkIfBuy(logs)
@@ -205,6 +205,7 @@ const main = async (wallet) => {
           if (shouldFetchPrice(accountInfo, twitterInfo, keyInfo)) {
             const price = await getBuyPrice(keyInfo.subject);
             const ethPrice = parseFloat(formatEther(price));
+            console.log(chalk.blue("lastPrice: ", ethPrice));
             keyInfo.price = ethPrice; // 以最新的价格去跑策略,看下能否通过所有条件
             if (shouldBuy(accountInfo, twitterInfo, keyInfo)) {
               logWork({
@@ -344,17 +345,19 @@ const main = async (wallet) => {
 
   const getBridgedAmount = async (subject) => {
     try {
-      const transactions = await axios.get(
-        `https://api.basescan.org/api?module=account&action=txlist&address=${subject}&startblock=0&endblock=99999999&sort=asc&apikey=${BASE_SCAN_API}&page=1
-        &offset=1`,
+      const res = await axios.get(
+        `https://api.basescan.org/api?module=account&action=txlist&address=${subject}&startblock=0&endblock=99999999&sort=asc&apikey=${BASE_SCAN_API}`,
         {
           timeout: 3000,
         }
       );
-      const bridgeTx = transactions?.data?.result?.[0];
-      if (bridgeTx) {
-        return parseFloat(formatEther(BigInt(bridgeTx.value)));
-      }
+      const incomeTxs = res.data.result.filter(
+        (f) => f.to.toLowerCase() === subject.toLowerCase()
+      );
+      const incomeTxsSum = incomeTxs.reduce((acc, cur) => {
+        return acc + parseFloat(formatEther(BigInt(cur.value)));
+      }, 0);
+      return incomeTxsSum;
       return 0;
     } catch (error) {
       await sleep(5);
