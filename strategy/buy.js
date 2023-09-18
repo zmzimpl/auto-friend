@@ -222,13 +222,88 @@ const containsNonceCondition = (strategy) => {
   return false;
 };
 
-export const shouldFetchTwitterInfo = () => {
+const getMaxNonceFromStrategy = (strategy) => {
+  if (strategy.type === STRATEGY_TYPES.ACCOUNT_NONCE) {
+    return strategy.value;
+  }
+  if (strategy.conditions) {
+    const nonces = strategy.conditions
+      .map(getMaxNonceFromStrategy)
+      .filter(Boolean);
+    return Math.max(...nonces);
+  }
+  return null;
+};
+
+export const shouldFetchTwitterInfo = (accountInfo, keyInfo) => {
+  const hasNonceCondition = containsNonceCondition(BuyStrategy);
+  const hasBridgedAmountCondition = containsBridgedAmountCondition(BuyStrategy);
+
+  const meetsNonceCondition = (strategy) => {
+    if (!hasNonceCondition) {
+      return true;
+    }
+    if (strategy.type === STRATEGY_TYPES.ACCOUNT_NONCE) {
+      return accountInfo.nonce <= strategy.value;
+    }
+    if (strategy.conditions) {
+      return strategy.conditions.some(meetsNonceCondition);
+    }
+    return false;
+  };
+
+  const meetsBridgedAmountCondition = (strategy) => {
+    if (!hasBridgedAmountCondition) {
+      return true;
+    }
+    if (strategy.type === STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT) {
+      return accountInfo.bridgedAmount >= strategy.value;
+    }
+    if (strategy.conditions) {
+      return strategy.conditions.some(meetsBridgedAmountCondition);
+    }
+    return false;
+  };
+
+  if (
+    !meetsNonceCondition(BuyStrategy) ||
+    !meetsBridgedAmountCondition(BuyStrategy)
+  ) {
+    console.log(
+      chalk.gray(
+        `${keyInfo.subject} either nonce or bridgedAmount conditions aren't met, no need to fetch Twitter info.`
+      )
+    );
+    return false;
+  }
   return containsTwitterConditions(BuyStrategy);
 };
 
-export const shouldFetchBridgedAmount = () => {
+export const shouldFetchBridgedAmount = (accountInfo, keyInfo) => {
+  if (containsNonceCondition(BuyStrategy)) {
+    const meetsNonceCondition = (strategy) => {
+      if (strategy.type === STRATEGY_TYPES.ACCOUNT_NONCE) {
+        return accountInfo.nonce <= strategy.value;
+      }
+      if (strategy.conditions) {
+        return strategy.conditions.some(meetsNonceCondition);
+      }
+      return false;
+    };
+
+    if (!meetsNonceCondition(BuyStrategy)) {
+      console.log(
+        chalk.gray(
+          `${keyInfo.subject} nonce condition isn't met, no need to fetch bridgedAmount`
+        )
+      );
+      return false;
+    }
+  }
+
   return containsBridgedAmountCondition(BuyStrategy);
 };
+
 export const shouldFetchNonce = () => {
   return containsNonceCondition(BuyStrategy);
 };

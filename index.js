@@ -65,6 +65,8 @@ const websocketClient = createPublicClient({
 });
 const BASE_SCAN_API = "GWV3I6MRRIIDB1RA4UAIYAYGJ4KCGRR5ME";
 
+const bridgedAmountMap = {};
+
 const main = async (wallet) => {
   const client = createWalletClient({
     account: privateKeyToAccount(`0x${wallet.pk}`),
@@ -136,8 +138,8 @@ const main = async (wallet) => {
           )
         );
         await checkIfBuy(logs);
-      }, 3000),
-      // 每 3 秒执行一次，因为频率太高，获取推特的关注人数方法会有问题() => checkIfBuy(logs)
+      }, 2000),
+      // 每 2 秒执行一次，因为频率太高，获取推特的关注人数方法会有问题() => checkIfBuy(logs)
     });
   };
 
@@ -177,11 +179,15 @@ const main = async (wallet) => {
     if (buying) return;
     if (logs instanceof Array && logs.length > 0) {
       try {
-        const filterLogs = logs.filter(
-          (log) =>
+        const filterLogs = logs.filter((log) => {
+          if (log.args.ethAmount === BigInt(0)) {
+            console.log(chalk.yellow("new User", log.args.subject));
+          }
+          return (
             parseFloat(formatEther(log.args.ethAmount)) < maxBuyPrice &&
             couldBeBought(log.args.subject)
-        );
+          );
+        });
         for (const log of filterLogs) {
           const keyInfo = await fetchProfile(log.args.subject);
           if (!keyInfo.username) continue;
@@ -194,19 +200,6 @@ const main = async (wallet) => {
           const whitelistedUser = isWhitelisted(keyInfo);
           // if not whitelisted
           if (!whitelistedUser) {
-            // if has twiiter conditions
-            if (shouldFetchTwitterInfo()) {
-              const info = await getUserInfo(keyInfo.username);
-              twitterInfo.followers = info.followers_count;
-              twitterInfo.posts = info.statuses_count;
-            }
-
-            if (shouldFetchBridgedAmount()) {
-              accountInfo.bridgedAmount = await getBridgedAmount(
-                keyInfo.subject
-              );
-            }
-
             if (shouldFetchNonce()) {
               accountInfo.nonce = await publicClient.getTransactionCount({
                 address: keyInfo.subject,
@@ -216,7 +209,32 @@ const main = async (wallet) => {
                 await checkAndUpdateBotJSON(keyInfo.subject);
               }
             }
+
+            if (shouldFetchBridgedAmount(accountInfo, keyInfo)) {
+              if (bridgedAmountMap[keyInfo.subject] !== undefined) {
+                accountInfo.bridgedAmount = bridgedAmountMap[keyInfo.subject];
+              } else {
+                accountInfo.bridgedAmount = bridgedAmountMap[keyInfo.subject] =
+                  await getBridgedAmount(keyInfo.subject);
+              }
+            }
+
+            // if has twiiter conditions and other conditions all met
+            if (shouldFetchTwitterInfo(accountInfo, keyInfo)) {
+              const info = await getUserInfo(keyInfo.username);
+              twitterInfo.followers = info.followers_count;
+              twitterInfo.posts = info.statuses_count;
+            }
           }
+          console.log(
+            chalk.blue(
+              JSON.stringify({
+                ...accountInfo,
+                ...twitterInfo,
+                ...keyInfo,
+              })
+            )
+          );
           if (shouldFetchPrice(accountInfo, twitterInfo, keyInfo)) {
             const price = await getBuyPrice(
               keyInfo.subject,
@@ -224,15 +242,6 @@ const main = async (wallet) => {
             );
             const ethPrice = parseFloat(formatEther(price));
             keyInfo.price = ethPrice; // 以最新的价格去跑策略,看下能否通过所有条件
-            console.log(
-              chalk.blueBright(
-                JSON.stringify({
-                  ...accountInfo,
-                  ...twitterInfo,
-                  ...keyInfo,
-                })
-              )
-            );
             if (shouldBuy(accountInfo, twitterInfo, keyInfo)) {
               logWork({
                 walletAddress: wallet.address,
@@ -496,6 +505,11 @@ const main = async (wallet) => {
               await checkIfSell();
             }
             lastActivity = res.data.events[0];
+          } else {
+            lastActivity = res.data.events[0];
+            console.warn(chalk.green("try execute sell..."));
+            await refreshHoldings();
+            await checkIfSell();
           }
         }
       }
