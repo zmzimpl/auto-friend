@@ -22,7 +22,7 @@ export const logIntro = () => {
   console.log(
     chalk.cyanBright.bold(
       `👽 Supports: Twitter followers check, Pending tx watching, Auto sell if profitable.
-      ❤️ Follow me on Twitter if you find it helpful: @zmzimpl `
+      ❤️  Follow me on Twitter if you find it helpful: @zmzimpl `
     )
   );
 };

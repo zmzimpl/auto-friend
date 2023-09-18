@@ -357,7 +357,6 @@ const main = async (wallet) => {
     const subjectMap = {};
     arr.forEach((item) => {
       subjectMap[item.subject.toString().toLowerCase()] = item;
-      console.log(item.username, item.subject.toString().toLowerCase());
     });
     transactions.forEach((transaction) => {
       const { args } = decodeFunctionData({
@@ -625,7 +624,6 @@ const main = async (wallet) => {
     if (intervalId !== undefined) {
       clearInterval(intervalId);
     }
-    console.log("maxBuyPrice", maxBuyPrice);
     await refreshHoldings();
     await checkIfSell();
     await watchContractTradeEvent();
