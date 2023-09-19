@@ -133,13 +133,8 @@ const main = async (wallet) => {
       abi: abi,
       eventName: "Trade",
       onLogs: throttle(async (logs) => {
-        console.log(
-          chalk.gray(
-            `Block number: ${logs[0].blockNumber}, Check to see if purchase conditions are met...`
-          )
-        );
         await checkIfBuy(logs);
-      }, 2000),
+      }, process.env.twitterToken ? 10 : 2000),
       // 每 2 秒执行一次，因为频率太高，获取推特的关注人数方法会有问题() => checkIfBuy(logs)
     });
   };
@@ -191,6 +186,7 @@ const main = async (wallet) => {
           );
         });
         for (const log of filterLogs) {
+          const start = Date.now()
           const keyInfo = await fetchProfile(log.args.subject);
           if (!keyInfo.username) continue;
           const ethAmount = log.args.ethAmount;
@@ -226,17 +222,18 @@ const main = async (wallet) => {
               const info = await getUserInfo(keyInfo.username);
               twitterInfo.followers = info.followers_count;
               twitterInfo.posts = info.statuses_count;
+              console.log(
+                chalk.blue(
+                  JSON.stringify({
+                    ...accountInfo,
+                    ...twitterInfo,
+                    ...keyInfo,
+                    duration: `${(Date.now() - start)/1000}s`
+                  })
+                )
+              );
             }
           }
-          console.log(
-            chalk.blue(
-              JSON.stringify({
-                ...accountInfo,
-                ...twitterInfo,
-                ...keyInfo,
-              })
-            )
-          );
           if (shouldFetchPrice(accountInfo, twitterInfo, keyInfo)) {
             const price = await getBuyPrice(
               keyInfo.subject,
@@ -695,6 +692,9 @@ process.env.pw2 = password2;
 if (password1 && password2) {
   for (let index = 0; index < wallets.length; index++) {
     const wallet = wallets[index];
+    if (wallet.twitterToken) {
+      process.env.twitterToken = wallet.twitterToken;
+    }
     main({
       ...wallet,
       pk: decrypt(wallet.pk, password1, password2),

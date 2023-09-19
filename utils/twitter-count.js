@@ -1,10 +1,11 @@
 import puppeteer from "puppeteer";
 import { sleep, getPropByStringPath } from ".";
+import axios from "axios";
 
 async function getTwitterUserInfo(username) {
   const browser = await puppeteer.launch({
     headless: "new",
-    args: ['--no-sandbox']
+    args: ["--no-sandbox"],
   });
   const browserProcess = browser.process();
   try {
@@ -70,11 +71,19 @@ export const getUserInfo = async (username) => {
     return userInfoMap[username];
   } else {
     try {
-      const data = await getTwitterUserInfo(username);
+      let data;
+      if (process.env.twitterToken) {
+        const res = await axios.get(
+          `http://localhost:5432/userInfo?username=${username}&token=${process.env.twitterToken}`
+        );
+        data = res.data;
+      } else {
+        data = await getTwitterUserInfo(username);
+      }
       userInfoMap[username] = data;
       return data;
     } catch (error) {
-      console.log('getUserInfo failed', error)
+      console.log("getUserInfo failed", error);
       await sleep(3);
       return {};
     }
