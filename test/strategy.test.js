@@ -33,15 +33,19 @@ describe("Strategy", () => {
 
   describe("couldBeBought", () => {
     it("Shouldn't buy 0x769dd66767ab8569cedacc11c3165706171ca86b ", () => {
-      const isCouldBeBought = couldBeBought(
-        "0x769dd66767ab8569cedacc11c3165706171ca86b"
-      );
+      const isCouldBeBought = couldBeBought({
+        subject: "0x769dd66767ab8569cedacc11c3165706171ca86b",
+        trader: "0x769dd66767ab8569cedacc11c3165706171ca86b",
+        isBuy: true,
+      });
       assert.equal(false, isCouldBeBought);
     });
-    it("0x634b5B0D940f6A4C48d5E6180a47EBb543a23F46 in not in block list ", () => {
-      const isCouldBeBought = couldBeBought(
-        "0x634b5B0D940f6A4C48d5E6180a47EBb543a23F46"
-      );
+    it("0xb2732A3DF005819BDAbDa33DDD28f7Cee0C704Ef in not in block list ", () => {
+      const isCouldBeBought = couldBeBought({
+        subject: "0xb2732A3DF005819BDAbDa33DDD28f7Cee0C704Ef",
+        trader: "0x634b5B0D940f6A4C48d5E6180a47EBb543a23F46",
+        isBuy: true,
+      });
       assert.equal(true, isCouldBeBought);
     });
   });

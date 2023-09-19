@@ -44,6 +44,8 @@ const BuyStrategy = {
       ],
     },
   ],
+  // 如果一个 key 是由 bots 列表内的地址出售的，不考虑买入
+  skipSoldByBot: false,
 };
 /** 不自动购买的地址, 可以把一些假号或者买过了知道会亏的放这里面 */
 const notBuyList = [
@@ -57,18 +59,27 @@ const notBuyList = [
 /** 不用管这个变量，但不要删除，用来定时读取 bots 名单做过滤的 */
 let bots = [];
 
-export const couldBeBought = (subject) => {
-  const isInBlockList = notBuyList.concat(bots).some((address) => {
+export const couldBeBought = ({ subject, trader, isBuy }) => {
+  const blockList = notBuyList.concat(bots);
+  const isInBlockList = blockList.some((address) => {
     const isBlock = address.toLowerCase() === subject.toLowerCase();
+    const isSoldByBot =
+      BuyStrategy.skipSoldByBot &&
+      !isBuy &&
+      trader &&
+      trader.toLowerCase() === address.toLowerCase();
     if (isBlock) {
       console.log(chalk.yellow(`${subject} 在不购买名单内，跳过`));
     }
-    return isBlock;
+    if (isSoldByBot) {
+      console.log(chalk.yellow(`bot ${subject} 抛售的，跳过不买`));
+    }
+    return isBlock || isSoldByBot;
   });
   return !isInBlockList;
 };
 
-const readBotJSON = async () => {
+export const readBotJSON = async () => {
   try {
     const data = await promises.readFile(getDir("bots.json"), "utf8");
     bots = JSON.parse(data);
@@ -80,12 +91,6 @@ const readBotJSON = async () => {
     console.error("Error reading bots.json:", error);
   }
 };
-
-// Read bots.json immediately upon starting the script
-readBotJSON();
-
-// Set an interval to read bots.json every 30 minutes (1800000 milliseconds)
-setInterval(readBotJSON, 1800000);
 
 const evaluateCondition = (condition, accountInfo, twitterInfo, keyInfo) => {
   switch (condition.type) {
