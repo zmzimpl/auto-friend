@@ -56,6 +56,8 @@ const notBuyList = [
   "0xf7b1cd33b199ee0831fa0c984fdae0955d47f2f6",
 ];
 
+export const BOT_JUDGED_NONCE = 300;
+
 /** 不用管这个变量，但不要删除，用来定时读取 bots 名单做过滤的 */
 let bots = [];
 

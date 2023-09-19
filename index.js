@@ -29,6 +29,7 @@ import pkg from "lodash";
 import readlineSync from "readline-sync";
 import { couldBeSold, getMaxPrice } from "./strategy";
 import {
+  BOT_JUDGED_NONCE,
   couldBeBought,
   isWhitelisted,
   readBotJSON,
@@ -205,7 +206,7 @@ const main = async (wallet) => {
               accountInfo.nonce = await publicClient.getTransactionCount({
                 address: keyInfo.subject,
               });
-              if (accountInfo.nonce > 200) {
+              if (accountInfo.nonce > BOT_JUDGED_NONCE) {
                 console.log(`nonce: ${accountInfo.nonce}`);
                 await checkAndUpdateBotJSON(keyInfo.subject);
               }
