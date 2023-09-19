@@ -3,7 +3,7 @@
     "user_id": "zmzimpl",
     "address": "your wallet address",
     "authorization": "Use utils/encrypt.js to encrypt your authorization and then put here",
-    "ifNoneMatch" : "Enter the requested if-node-match",
+    "ifNoneMatch" : "Enter the requested if-none-match",
     "pk": "Use utils/encrypt.js to encrypt your private key and then put here"
   },
   {

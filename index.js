@@ -378,10 +378,18 @@ const main = async (wallet) => {
       const subject = args[0].toString().toLowerCase();
       if (subjectMap[subject]) {
         if (subjectMap[subject].cost) {
-          subjectMap[subject].cost = BigInt(subjectMap[subject].cost) + BigInt(calculateTransactionCost(transaction));
+          // 如果 balance 只有 1，交易记录买过 2 次，卖出 1 次，只记录一次成本
+          if (subjectMap[subject].counter < subjectMap[subject].balance) {
+            subjectMap[subject].counter += 1;
+            subjectMap[subject].cost =
+              BigInt(subjectMap[subject].cost) +
+              BigInt(calculateTransactionCost(transaction));
+          }
         } else {
+          subjectMap[subject].counter = 1;
           subjectMap[subject].cost = calculateTransactionCost(transaction);
         }
+
         subjectMap[subject].holdingDuration = hoursSinceCreatedAt(
           transaction.timeStamp
         );
@@ -437,7 +445,10 @@ const main = async (wallet) => {
       const succeedTransactions = (transactions?.data?.result || [])?.filter(
         (transaction) => {
           return (
-            transaction.isError === "0" && transaction.to === contractAddress
+            transaction.isError === "0" &&
+            transaction.to === contractAddress &&
+            // 只筛选出买入的交易
+            transaction.methodId === "0x6945b123"
           );
         }
       );
