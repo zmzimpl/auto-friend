@@ -132,9 +132,12 @@ const main = async (wallet) => {
       address: contractAddress,
       abi: abi,
       eventName: "Trade",
-      onLogs: throttle(async (logs) => {
-        await checkIfBuy(logs);
-      }, process.env.twitterToken ? 10 : 2000),
+      onLogs: throttle(
+        async (logs) => {
+          await checkIfBuy(logs);
+        },
+        process.env.twitterToken ? 10 : 2000
+      ),
       // 每 2 秒执行一次，因为频率太高，获取推特的关注人数方法会有问题() => checkIfBuy(logs)
     });
   };
@@ -186,7 +189,7 @@ const main = async (wallet) => {
           );
         });
         for (const log of filterLogs) {
-          const start = Date.now()
+          const start = Date.now();
           const keyInfo = await fetchProfile(log.args.subject);
           if (!keyInfo.username) continue;
           const ethAmount = log.args.ethAmount;
@@ -205,6 +208,7 @@ const main = async (wallet) => {
               if (accountInfo.nonce > BOT_JUDGED_NONCE) {
                 console.log(`nonce: ${accountInfo.nonce}`);
                 await checkAndUpdateBotJSON(keyInfo.subject);
+                continue;
               }
             }
 
@@ -228,7 +232,7 @@ const main = async (wallet) => {
                     ...accountInfo,
                     ...twitterInfo,
                     ...keyInfo,
-                    duration: `${(Date.now() - start)/1000}s`
+                    duration: `${(Date.now() - start) / 1000}s`,
                   })
                 )
               );
