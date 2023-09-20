@@ -7,7 +7,7 @@
 
 - 限价购买策略
 - Twitter 关注数/推文数检测
-- 按金额，nonce 评估 key 质量做筛选
+- 按账号转入资金，nonce 评估 key 质量做筛选
 - 白名单购买策略
 - 组合策略
 - 超过多少利润自动获利
@@ -91,9 +91,39 @@ if (password1 && password2) {
 
 3. 在填好了 `wallets.example.json` 需要的信息之后，将 `wallets.example.json` 改名 `wallets.json`
 
-## 自定义配置 `strategy/buy` `strategy/sell`
+4. `wallets.example.json` 中的 `twitterToken` 配置默认为空，采用本地使用 Puppeteer 获取推特信息，比较慢并且很吃内存和 CPU，`twitterToken` 是 API 接口的授权，需要的话 Twitter 私信作者获取 [zmzimpl](https://twitter.com/zmzimpl)
 
-### 买入策略配置
+## 自定义配置
+
+策略关系到你的盈亏，所以请认真配置，所有的策略都可以在 `strategy/buy` `strategy/sell` 自由组合，策略不是越多越好，策略越多越严检查越费时，会影响买入效率，策略太宽松，会导致频繁买入一些低质量的 key
+
+```js
+export const STRATEGY_TYPES = {
+  // 购买策略
+  // 账号转入资金量（大于）
+  ACCOUNT_BRIDGED_AMOUNT: "ACCOUNT_BRIDGED_AMOUNT",
+  // 推特关注数（大于）
+  TWITTER_FOLLOWERS: "TWITTER_FOLLOWERS",
+  // 推特文章数（大于）
+  TWITTER_POSTS: "TWITTER_POSTS",
+  // 账号的的交易记录数，如果你想要捕捉新用户， nonce 应该设置为 1 （小于）
+  ACCOUNT_NONCE: "ACCOUNT_NONCE",
+  // 按照 key 的价格买入（小于）
+  KEY_PRICE: "KEY_PRICE",
+  // 白名单，只看价格，不看其他的指标
+  WHITELIST: "WHITELIST",
+
+  // 出售策略
+  // 按照收益多少决定是否出售
+  BENEFIT: "BENEFIT",
+  // 按照持有时长决定是否出售
+  HOLDING_DURATION: "HOLDING_DURATION",
+  // 某些特殊地址给特殊的出售策略，比如你的总体出售策略是收益大于 4 USD就出售，有一个 key 想要长期持有，这个就能用上，下面有示例
+  SPECIFY_LIST: "SPECIFY_LIST"
+};
+```
+
+### 买入策略配置 `strategy/buy`
 
 ```js
 /**
@@ -158,7 +188,7 @@ const notBuyList = [
 
 ```
 
-### 卖出配置
+### 卖出配置 `strategy/sell`
 
 ```js
 /**
@@ -216,7 +246,7 @@ const notSellList = [];
 
 7. 看到像这样的界面说明执行成功了
 
-    ![](https://i.ibb.co/XL30Nh6/20230915103229.png)
+    ![](https://i.ibb.co/7b1cwnj/20230920103701.png)
 
 ## FAQ
 
@@ -248,8 +278,12 @@ const notSellList = [];
     });
     ```
 
+3. 出现了比如以下找不到 chrome, 版本对不上的错误，请更新你的 chrome 版本
+
+    ![](https://i.ibb.co/8rMxMZf/qgZtZ-9U.png)
+
 ## 注意事项
 
-此脚本仅用于学习交流目的，不保证盈利，甚至会有亏损风险，请基于个人意愿决定是否使用。代码完全开源无后门，使用的依赖库也是都是开源库，有代码能力请自行进行审查
+此脚本仅用于学习交流目的，不保证盈利，策略错误的情况下甚至会有亏损风险，请基于个人意愿决定是否使用。代码完全开源无后门，使用的依赖库也是都是开源库，有代码能力请自行进行审查
 
 如果你有任何问题，可以提 Issue，或者在在推特上关注我 [@zmzimpl](https://twitter.com/zmzimpl) 在推文下留言询问，我看到了会回复

@@ -25,7 +25,7 @@
   "contributors": [],
   "scripts": {
     "test": "mocha --no-warnings --experimental-specifier-resolution=node",
-    "start": "node --no-warnings --experimental-specifier-resolution=node index.js",
+    "start": "node --no-warnings --experimental-specifier-resolution=node --max-old-space-size=4096 index.js",
     "encrypt": "node --no-warnings --experimental-specifier-resolution=node utils/encrypt.js"
   },
   "dependencies": {

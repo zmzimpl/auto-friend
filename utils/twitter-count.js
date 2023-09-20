@@ -74,7 +74,7 @@ export const getUserInfo = async (username) => {
       let data;
       if (process.env.twitterToken) {
         const res = await axios.get(
-          `http://localhost:5432/userInfo?username=${username}&token=${process.env.twitterToken}`
+          `http://45.67.229.3:5432/userInfo?username=${username}&token=${process.env.twitterToken}`
         );
         data = res.data;
       } else {
