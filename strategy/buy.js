@@ -58,10 +58,7 @@ const notBuyList = [
 
 export const BOT_JUDGED_NONCE = 300;
 
-/** 不用管这个变量，但不要删除，用来定时读取 bots 名单做过滤的 */
-let bots = [];
-
-export const couldBeBought = ({ subject, trader, isBuy }) => {
+export const couldBeBought = ({ subject, trader, isBuy }, bots) => {
   const blockList = notBuyList.concat(bots);
   const isInBlockList = blockList.some((address) => {
     const isBlock = address.toLowerCase() === subject.toLowerCase();
@@ -81,18 +78,18 @@ export const couldBeBought = ({ subject, trader, isBuy }) => {
   return !isInBlockList;
 };
 
-export const readBotJSON = async () => {
-  try {
-    const data = await promises.readFile(getDir("bots.json"), "utf8");
-    bots = JSON.parse(data);
+// export const readBotJSON = async () => {
+//   try {
+//     const data = await promises.readFile(getDir("bots.json"), "utf8");
+//     bots = JSON.parse(data);
 
-    if (Array.isArray(bots)) {
-      console.log(`已经将 ${bots.length} 个 bot 名单列入不购买名单`);
-    }
-  } catch (error) {
-    console.error("Error reading bots.json:", error);
-  }
-};
+//     if (Array.isArray(bots)) {
+      
+//     }
+//   } catch (error) {
+//     console.error("Error reading bots.json:", error);
+//   }
+// };
 
 const evaluateCondition = (condition, accountInfo, twitterInfo, keyInfo) => {
   switch (condition.type) {

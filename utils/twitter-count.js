@@ -1,5 +1,5 @@
 import puppeteer from "puppeteer";
-import { sleep, getPropByStringPath } from ".";
+import { sleep, getPropByStringPath } from "./index.js";
 import axios from "axios";
 
 async function getTwitterUserInfo(username) {

@@ -1,11 +1,11 @@
 import figlet from "figlet";
 import logUpdate from "log-update";
 
-import { chalk } from "./chalk";
-import { formatDate } from "./date";
-import { sleep } from "./sleep";
-import { actionToColor } from "../constants/actionToColor";
-import { LOADER_FRAMES } from "../constants";
+import { chalk } from "./chalk.js";
+import { formatDate } from "./date.js";
+import { sleep } from "./sleep.js";
+import { actionToColor } from "../constants/actionToColor.js";
+import { LOADER_FRAMES } from "../constants/index.js";
 
 export const logIntro = () => {
   console.log(

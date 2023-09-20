@@ -3,10 +3,8 @@ import {
   getUserInfo,
   getDir,
   logIntro,
-  randint,
   sleep,
   logWork,
-  logLoader,
   decrypt,
 } from "./utils";
 import consoleStamp from "console-stamp";
@@ -32,7 +30,6 @@ import {
   BOT_JUDGED_NONCE,
   couldBeBought,
   isWhitelisted,
-  readBotJSON,
   shouldBuy,
   shouldFetchBridgedAmount,
   shouldFetchNonce,
@@ -44,6 +41,7 @@ import { shouldSell } from "./strategy/sell";
 const { throttle } = pkg;
 
 const wallets = JSON.parse(readFileSync(getDir("wallets.json"), "utf8"));
+const bots = JSON.parse(readFileSync(getDir("bots.json"), "utf8"));
 const abi = JSON.parse(readFileSync(getDir("abi.json"), "utf-8"));
 const contractAddress = "0xcf205808ed36593aa40a44f10c7f7c2f67d4a4d4";
 const publicClient = createPublicClient({
@@ -66,7 +64,7 @@ const websocketClient = createPublicClient({
 });
 const BASE_SCAN_API = "GWV3I6MRRIIDB1RA4UAIYAYGJ4KCGRR5ME";
 
-const bridgedAmountMap = {};
+let bridgedAmountMap = {};
 
 const main = async (wallet) => {
   const client = createWalletClient({
@@ -185,7 +183,7 @@ const main = async (wallet) => {
 
           return (
             parseFloat(formatEther(log.args.ethAmount)) < maxBuyPrice &&
-            couldBeBought(log.args)
+            couldBeBought(log.args, bots)
           );
         });
         for (const log of filterLogs) {
@@ -207,6 +205,7 @@ const main = async (wallet) => {
               });
               if (accountInfo.nonce > BOT_JUDGED_NONCE) {
                 console.log(`nonce: ${accountInfo.nonce}`);
+                bots.push(keyInfo.subject);
                 await checkAndUpdateBotJSON(keyInfo.subject);
                 continue;
               }
@@ -297,6 +296,8 @@ const main = async (wallet) => {
   };
 
   const freshNonce = async () => {
+    // 顺便把占用内存的变量释放掉
+    bridgedAmountMap = {};
     try {
       console.log("刷新 nonce...");
       const transactionCount = await publicClient.getTransactionCount({
@@ -656,11 +657,7 @@ const main = async (wallet) => {
   };
 
   const execute = async () => {
-    // Read bots.json immediately upon starting the script
-    readBotJSON();
-
-    // Set an interval to read bots.json every 30 minutes (1800000 milliseconds)
-    setInterval(readBotJSON, 1800000);
+    console.log(`已经将 ${bots.length} 个 bot 名单列入不购买名单`);
     if (unwatch) {
       await unwatch();
     }

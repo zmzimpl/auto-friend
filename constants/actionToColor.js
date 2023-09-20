@@ -1,4 +1,4 @@
-import { chalk } from "../utils";
+import { chalk } from "../utils/index.js";
 
 export const actionToColor = {
   buy: chalk.hex("#FC1E1E"),

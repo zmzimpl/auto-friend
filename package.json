@@ -25,7 +25,8 @@
   "contributors": [],
   "scripts": {
     "test": "mocha --no-warnings --experimental-specifier-resolution=node",
-    "start": "node --no-warnings --experimental-specifier-resolution=node --max-old-space-size=4096 index.js",
+    "start": "node --no-warnings --experimental-specifier-resolution=node index.js",
+    "message": "node --no-warnings --experimental-specifier-resolution=node auto-message.js",
     "encrypt": "node --no-warnings --experimental-specifier-resolution=node utils/encrypt.js"
   },
   "dependencies": {
@@ -42,7 +43,8 @@
     "puppeteer-core": "^21.2.0",
     "readline-sync": "^1.4.10",
     "socks-proxy-agent": "^8.0.2",
-    "viem": "^1.10.9",
+    "viem": "latest",
+    "wagmi": "latest",
     "ws": "^8.14.1"
   },
   "devDependencies": {
