@@ -100,15 +100,15 @@ if (password1 && password2) {
 ```js
 export const STRATEGY_TYPES = {
   // 购买策略
-  // 账号转入资金量（大于）
+  // 账号转入资金量（大于等于）
   ACCOUNT_BRIDGED_AMOUNT: "ACCOUNT_BRIDGED_AMOUNT",
-  // 推特关注数（大于）
+  // 推特关注数（大于等于）
   TWITTER_FOLLOWERS: "TWITTER_FOLLOWERS",
-  // 推特文章数（大于）
+  // 推特文章数（大于等于）
   TWITTER_POSTS: "TWITTER_POSTS",
-  // 账号的的交易记录数，如果你想要捕捉新用户， nonce 应该设置为 1 （小于）
+  // 账号的的交易记录数，如果你想要捕捉新用户， nonce 应该设置为 1 （小于等于）
   ACCOUNT_NONCE: "ACCOUNT_NONCE",
-  // 按照 key 的价格买入（小于）
+  // 按照 key 的价格买入（小于等于）
   KEY_PRICE: "KEY_PRICE",
   // 白名单，只看价格，不看其他的指标
   WHITELIST: "WHITELIST",

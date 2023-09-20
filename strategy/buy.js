@@ -15,9 +15,9 @@ const BuyStrategy = {
       conditions: [
         // 价格
         { type: STRATEGY_TYPES.KEY_PRICE, value: 0.002 },
-        // 账户跨桥的金额，觉得不需要可以删掉或者注释掉
+        // 账户跨桥的金额，觉得不需要不要删除，设置足够小，比如 0.0000001
         { type: STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT, value: 0.1 },
-        // 账户 nonce，觉得不需要可以删掉或者注释掉
+        // 账户 nonce，觉得不需要不要删掉，设置足够大，比如 9999999
         { type: STRATEGY_TYPES.ACCOUNT_NONCE, value: 5 },
         // 推特关注数，觉得不需要可以删掉或者注释掉
         { type: STRATEGY_TYPES.TWITTER_FOLLOWERS, value: 15000 },
