@@ -1,13 +1,6 @@
 import axios from "axios";
 import { readFileSync } from "fs";
-import {
-  getUserInfo,
-  getDir,
-  logIntro,
-  sleep,
-  decrypt,
-  chalk,
-} from "./utils";
+import { getUserInfo, getDir, logIntro, sleep, decrypt, chalk } from "./utils";
 import WebSocket from "ws";
 import { createPublicClient, formatEther, webSocket } from "viem";
 import { base } from "viem/chains";
@@ -189,6 +182,7 @@ const autoMessage = async (wallet) => {
               ...profile,
               price: parseFloat(formatEther(log.args.ethAmount)),
               roomOwner: wallet.user_id,
+              chatRoomId: wallet.address,
             });
 
             // 下面这个代码会向你所有持有的 key 的聊天室发送内容
@@ -240,7 +234,7 @@ Followers: ${profile.followers}
 Price: ${profile.price} ETH
 `,
       imagePaths: [],
-      chatRoomId: chatRoomId || "0x634b5b0d940f6a4c48d5e6180a47ebb543a23f46",
+      chatRoomId: chatRoomId,
       clientMessageId: generateHexId(),
     };
 
