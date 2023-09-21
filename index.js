@@ -74,6 +74,7 @@ const main = async (wallet) => {
   });
 
   const gasLimit = "100000";
+  const maxBuyPrice = getMaxPrice();
 
   let holdings = [];
   let nonce = 56;
@@ -83,7 +84,7 @@ const main = async (wallet) => {
   let lastActivity;
   let intervalId;
   let selling = false;
-  const maxBuyPrice = getMaxPrice();
+  let twitterInfoMap = {};
 
   const buyShare = async (value, subjectAddress, amount = 1) => {
     if (buying) return;
@@ -124,7 +125,7 @@ const main = async (wallet) => {
   const watchContractTradeEvent = async () => {
     await freshNonce();
     if (unwatch) {
-      await unwatch();
+      unwatch();
     }
     unwatch = websocketClient.watchContractEvent({
       address: contractAddress,
@@ -148,7 +149,7 @@ const main = async (wallet) => {
       });
       return price > 0 ? price : await getBuyPrice(subjectAddress, amount);
     } catch (error) {
-      console.log("get buy price failed", error);
+      console.log("get buy price failed", error.message);
       return await getBuyPrice(subjectAddress, amount);
     }
   };
@@ -222,7 +223,14 @@ const main = async (wallet) => {
 
             // if has twiiter conditions and other conditions all met
             if (shouldFetchTwitterInfo(accountInfo, keyInfo)) {
-              const info = await getUserInfo(keyInfo.username);
+              let info;
+              if (twitterInfoMap[keyInfo.username]) {
+                info = twitterInfoMap[keyInfo.username];
+              } else {
+                info = twitterInfoMap[keyInfo.username] = await getUserInfo(
+                  keyInfo.username
+                );
+              }
               twitterInfo.followers = info.followers_count;
               twitterInfo.posts = info.statuses_count;
               console.log(
@@ -298,6 +306,7 @@ const main = async (wallet) => {
   const freshNonce = async () => {
     // 顺便把占用内存的变量释放掉
     bridgedAmountMap = {};
+    twitterInfoMap = {};
     try {
       console.log("刷新 nonce...");
       const transactionCount = await publicClient.getTransactionCount({
@@ -343,7 +352,7 @@ const main = async (wallet) => {
         holdings = [];
       }
     } catch (error) {
-      console.log("refreshHoldings error", error);
+      console.log("refreshHoldings error", error.message);
       await sleep(3);
       await refreshHoldings();
     }
@@ -635,7 +644,7 @@ const main = async (wallet) => {
     await freshNonce();
     let unwatched = false;
     if (unwatch) {
-      await unwatch();
+      unwatch();
       unwatched = true;
     }
     while (buying) {
@@ -658,9 +667,6 @@ const main = async (wallet) => {
 
   const execute = async () => {
     console.log(`已经将 ${bots.length} 个 bot 名单列入不购买名单`);
-    if (unwatch) {
-      await unwatch();
-    }
     if (intervalId !== undefined) {
       clearInterval(intervalId);
     }
@@ -672,7 +678,7 @@ const main = async (wallet) => {
       if (!selling) {
         await watchHoldingsActivity();
       }
-    }, 1000 * 30);
+    }, 1000 * 60);
   };
 
   execute();

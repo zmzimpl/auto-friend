@@ -64,12 +64,10 @@ async function getTwitterUserInfo(username) {
   }
 }
 
-const userInfoMap = {};
+
 
 export const getUserInfo = async (username) => {
-  if (userInfoMap[username]) {
-    return userInfoMap[username];
-  } else {
+
     try {
       let data;
       if (process.env.twitterToken) {
@@ -80,14 +78,12 @@ export const getUserInfo = async (username) => {
       } else {
         data = await getTwitterUserInfo(username);
       }
-      userInfoMap[username] = data;
       return data;
     } catch (error) {
       console.log("getUserInfo failed", error);
       await sleep(3);
       return {};
     }
-  }
   // if (!cookie) {
   //   await refreshToken();
   // }

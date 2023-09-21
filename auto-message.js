@@ -4,10 +4,7 @@ import {
   getUserInfo,
   getDir,
   logIntro,
-  randint,
   sleep,
-  logWork,
-  logLoader,
   decrypt,
   chalk,
 } from "./utils";
@@ -109,7 +106,7 @@ const autoMessage = async (wallet) => {
         holdings = [];
       }
     } catch (error) {
-      console.log("refreshHoldings error", error);
+      console.log("refreshHoldings error", error.message);
       await sleep(3);
       await getHoldings();
     }
@@ -133,7 +130,7 @@ const autoMessage = async (wallet) => {
         },
       }
     );
-    console.log(globalActivities.events);
+    // console.log(globalActivities.events);
   };
 
   const fetchProfile = async (subject) => {
