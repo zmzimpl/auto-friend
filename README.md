@@ -6,8 +6,8 @@
 ## 功能
 
 - 限价购买策略
-- Twitter 关注数/推文数检测
-- 按账号转入资金，nonce 评估 key 质量做筛选
+- Twitter 关注数/推文数策略
+- Twitter 文章浏览量策略
 - 白名单购买策略
 - 组合策略
 - 超过多少利润自动获利
@@ -91,7 +91,8 @@ if (password1 && password2) {
 
 3. 在填好了 `wallets.example.json` 需要的信息之后，将 `wallets.example.json` 改名 `wallets.json`
 
-4. `wallets.example.json` 中的 `twitterToken` 配置默认为空，采用本地使用 Puppeteer 获取推特信息，比较慢并且很吃内存和 CPU，`twitterToken` 是 API 接口的授权，需要的话 Twitter 私信作者获取 [zmzimpl](https://twitter.com/zmzimpl)
+4. `useTwitterAPI` 默认使用开启，在编辑器下运行需要你全局代理（如果你的电脑需要VPN才能访问推特的话），可以使用 Clash 的 TUN 模式，海外用户不需要代理。
+`useTwitterAPI` 设置为 `false` 也能跑，使用的是本地 puppeteer 环境，会很慢并且卡，慎用
 
 ## 自定义配置
 
@@ -100,14 +101,10 @@ if (password1 && password2) {
 ```js
 export const STRATEGY_TYPES = {
   // 购买策略
-  // 账号转入资金量（大于等于）
-  ACCOUNT_BRIDGED_AMOUNT: "ACCOUNT_BRIDGED_AMOUNT",
   // 推特关注数（大于等于）
   TWITTER_FOLLOWERS: "TWITTER_FOLLOWERS",
   // 推特文章数（大于等于）
   TWITTER_POSTS: "TWITTER_POSTS",
-  // 账号的的交易记录数，如果你想要捕捉新用户， nonce 应该设置为 1 （小于等于）
-  ACCOUNT_NONCE: "ACCOUNT_NONCE",
   // 按照 key 的价格买入（小于等于）
   KEY_PRICE: "KEY_PRICE",
   // 白名单，只看价格，不看其他的指标
@@ -147,10 +144,6 @@ const BuyStrategy = {
       conditions: [
         // 价格
         { type: STRATEGY_TYPES.KEY_PRICE, value: 0.002 },
-        // 账户跨桥的金额
-        { type: STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT, value: 0.1 },
-        // 账户 nonce
-        { type: STRATEGY_TYPES.ACCOUNT_NONCE, value: 5 },
         // 推特关注数
         { type: STRATEGY_TYPES.TWITTER_FOLLOWERS, value: 15000 },
         // 推特文章数
@@ -161,8 +154,6 @@ const BuyStrategy = {
       operator: STRATEGY_OPERATORS.AND,
       conditions: [
         { type: STRATEGY_TYPES.KEY_PRICE, value: 0.004 },
-        { type: STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT, value: 0.2 },
-        { type: STRATEGY_TYPES.ACCOUNT_NONCE, value: 5 },
         { type: STRATEGY_TYPES.TWITTER_FOLLOWERS, value: 35000 },
         { type: STRATEGY_TYPES.TWITTER_POSTS, value: 400 },
       ],

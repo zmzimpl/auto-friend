@@ -263,6 +263,7 @@ process.env.pw2 = password2;
 if (password1 && password2) {
   for (let index = 0; index < wallets.length; index++) {
     const wallet = wallets[index];
+    process.env.useTwitterAPI = wallet.useTwitterAPI;
     autoMessage({
       ...wallet,
       pk: decrypt(wallet.pk, password1, password2),

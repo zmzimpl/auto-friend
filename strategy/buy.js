@@ -7,32 +7,64 @@ import chalk from "chalk";
  * 购买策略
  * 涉及价格，金额的单位统一为 ETH
  */
-const BuyStrategy = {
+export const BuyStrategy = {
   operator: STRATEGY_OPERATORS.OR,
   conditions: [
     {
       operator: STRATEGY_OPERATORS.AND,
       conditions: [
         // 价格
+        { type: STRATEGY_TYPES.KEY_PRICE, value: 0.0003 },
+        // 推特关注数，觉得不需要可以删掉或者注释掉
+        { type: STRATEGY_TYPES.TWITTER_FOLLOWERS, value: 1000 },
+        // 推特文章数，觉得不需要可以删掉或者注释掉
+        { type: STRATEGY_TYPES.TWITTER_POSTS, value: 100 },
+        // 推特平均阅读量，不一定非常精准，因为获取到的是用户的历史推文阅读量，甚至有一些推特会获取不到阅读量，但 Like 量很高
+        { type: STRATEGY_TYPES.TWITTER_VIEWS, value: 300 },
+        // 推特推特平均 Like 量，同阅读量一样，都是历史推文的 Like 量
+        { type: STRATEGY_TYPES.TWITTER_FAVS, value: 10 },
+      ],
+    },
+    {
+      operator: STRATEGY_OPERATORS.AND,
+      conditions: [
+        // 价格
+        { type: STRATEGY_TYPES.KEY_PRICE, value: 0.001 },
+        // 推特关注数，觉得不需要可以删掉或者注释掉
+        { type: STRATEGY_TYPES.TWITTER_FOLLOWERS, value: 10000 },
+        // 推特文章数，觉得不需要可以删掉或者注释掉
+        { type: STRATEGY_TYPES.TWITTER_POSTS, value: 100 },
+        // 推特平均阅读量
+        { type: STRATEGY_TYPES.TWITTER_VIEWS, value: 5000 },
+        // 推特推特平均 Like 量
+        { type: STRATEGY_TYPES.TWITTER_FAVS, value: 50 },
+      ],
+    },
+    {
+      operator: STRATEGY_OPERATORS.AND,
+      conditions: [
+        // 价格
         { type: STRATEGY_TYPES.KEY_PRICE, value: 0.002 },
-        // 账户跨桥的金额，觉得不需要不要删除，设置足够小，比如 0.0000001
-        { type: STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT, value: 0.1 },
-        // 账户 nonce，觉得不需要不要删掉，设置足够大，比如 9999999
-        { type: STRATEGY_TYPES.ACCOUNT_NONCE, value: 5 },
         // 推特关注数，觉得不需要可以删掉或者注释掉
         { type: STRATEGY_TYPES.TWITTER_FOLLOWERS, value: 15000 },
         // 推特文章数，觉得不需要可以删掉或者注释掉
         { type: STRATEGY_TYPES.TWITTER_POSTS, value: 100 },
+        // 推特平均阅读量
+        { type: STRATEGY_TYPES.TWITTER_VIEWS, value: 8000 },
+        // 推特推特平均 Like 量
+        { type: STRATEGY_TYPES.TWITTER_FAVS, value: 80 },
       ],
     },
     {
       operator: STRATEGY_OPERATORS.AND,
       conditions: [
         { type: STRATEGY_TYPES.KEY_PRICE, value: 0.004 },
-        { type: STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT, value: 0.2 },
-        { type: STRATEGY_TYPES.ACCOUNT_NONCE, value: 5 },
         { type: STRATEGY_TYPES.TWITTER_FOLLOWERS, value: 35000 },
         { type: STRATEGY_TYPES.TWITTER_POSTS, value: 400 },
+        // 推特平均阅读量
+        { type: STRATEGY_TYPES.TWITTER_VIEWS, value: 15000 },
+        // 推特推特平均 Like 量
+        { type: STRATEGY_TYPES.TWITTER_FAVS, value: 200 },
       ],
     },
     {
@@ -44,8 +76,12 @@ const BuyStrategy = {
       ],
     },
   ],
+  // 只买蓝 V 认证的推特
+  onlyBuyBlueVerified: true,
   // 如果一个 key 是由 bots 列表内的地址出售的，不考虑买入
   skipSoldByBot: false,
+  // 限制同一个 key 买入的最大数量,设置 0 表示不限制
+  buyAmountLimit: 2,
 };
 /** 不自动购买的地址, 可以把一些假号或者买过了知道会亏的放这里面 */
 const notBuyList = [
@@ -58,7 +94,7 @@ const notBuyList = [
 
 export const BOT_JUDGED_NONCE = 300;
 
-export const couldBeBought = ({ subject, trader, isBuy }, bots) => {
+export const couldBeBought = ({ subject, trader, isBuy }, bots, holdings) => {
   const blockList = notBuyList.concat(bots);
   const isInBlockList = blockList.some((address) => {
     const isBlock = address.toLowerCase() === subject.toLowerCase();
@@ -75,7 +111,15 @@ export const couldBeBought = ({ subject, trader, isBuy }, bots) => {
     }
     return isBlock || isSoldByBot;
   });
-  return !isInBlockList;
+
+  const buyAmountLimitReached =
+    BuyStrategy.buyAmountLimit &&
+    holdings.find(
+      (f) =>
+        f.subject.toLowerCase() === subject.toLowerCase() &&
+        +f.balance > BuyStrategy.buyAmountLimit
+    );
+  return !isInBlockList && !buyAmountLimitReached;
 };
 
 // export const readBotJSON = async () => {
@@ -84,7 +128,7 @@ export const couldBeBought = ({ subject, trader, isBuy }, bots) => {
 //     bots = JSON.parse(data);
 
 //     if (Array.isArray(bots)) {
-      
+
 //     }
 //   } catch (error) {
 //     console.error("Error reading bots.json:", error);
@@ -93,14 +137,14 @@ export const couldBeBought = ({ subject, trader, isBuy }, bots) => {
 
 const evaluateCondition = (condition, accountInfo, twitterInfo, keyInfo) => {
   switch (condition.type) {
-    case STRATEGY_TYPES.ACCOUNT_BRIDGED_AMOUNT:
-      return accountInfo.bridgedAmount >= condition.value;
+    case STRATEGY_TYPES.TWITTER_VIEWS:
+      return twitterInfo.viewAvg >= condition.value;
+    case STRATEGY_TYPES.TWITTER_FAVS:
+      return twitterInfo.favoriteAvg >= condition.value;
     case STRATEGY_TYPES.TWITTER_FOLLOWERS:
       return twitterInfo.followers >= condition.value;
     case STRATEGY_TYPES.TWITTER_POSTS:
       return twitterInfo.posts >= condition.value;
-    case STRATEGY_TYPES.ACCOUNT_NONCE:
-      return accountInfo.nonce <= condition.value;
     case STRATEGY_TYPES.KEY_PRICE:
       return keyInfo.price < condition.value;
     case STRATEGY_TYPES.WHITELIST:
@@ -250,41 +294,36 @@ const getMinBridgedAmount = (strategy) => {
   return Infinity; // Default value when no bridgedAmount is found
 };
 
-const maxNonceValue = getMaxNonce(BuyStrategy);
-const minBridgedAmountValue = getMinBridgedAmount(BuyStrategy);
-
 export const shouldFetchTwitterInfo = (accountInfo, keyInfo) => {
-  if (accountInfo.nonce > maxNonceValue) {
-    console.log(
-      chalk.cyan(
-        `${keyInfo.subject} nonce(${accountInfo.nonce}) > maximum allowable value(${maxNonceValue}), no need to fetch Twitter info.`
-      )
-    );
-    return false;
-  }
-  if (accountInfo.bridgedAmount < minBridgedAmountValue) {
-    console.log(
-      chalk.blue(
-        `${keyInfo.subject} bridgedAmount(${accountInfo.bridgedAmount}) < minimum allowable value(${minBridgedAmountValue}), no need to fetch Twitter info.`
-      )
-    );
-    return false;
-  }
   return containsTwitterConditions(BuyStrategy);
 };
 
 export const shouldFetchBridgedAmount = (accountInfo, keyInfo) => {
-  if (accountInfo.nonce > maxNonceValue) {
-    console.log(
-      chalk.cyan(
-        `${keyInfo.subject} nonce(${accountInfo.nonce}) > maximum allowable value(${maxNonceValue}), no need to fetch bridgedAmount`
-      )
-    );
-    return false;
-  }
   return containsBridgedAmountCondition(BuyStrategy);
 };
 
 export const shouldFetchNonce = () => {
   return containsNonceCondition(BuyStrategy);
+};
+
+export const shouldFetchTwitterViewInfo = () => {
+  return containsTwitterViewConditions(BuyStrategy);
+};
+
+const containsTwitterViewConditions = (strategy) => {
+  if (strategy.conditions) {
+    for (let condition of strategy.conditions) {
+      if (
+        condition.type === STRATEGY_TYPES.TWITTER_VIEWS ||
+        condition.type === STRATEGY_TYPES.TWITTER_FAVS
+      ) {
+        return true;
+      }
+      if (condition.operator && containsTwitterConditions(condition)) {
+        // 如果是 AND 或 OR 条件
+        return true;
+      }
+    }
+  }
+  return false;
 };

@@ -5,14 +5,14 @@
     "authorization": "Use utils/encrypt.js to encrypt your authorization and then put here",
     "ifNoneMatch" : "Enter the requested if-none-match",
     "pk": "Use utils/encrypt.js to encrypt your private key and then put here",
-    "twitterToken": "twitter api request token"
+    "useTwitterAPI": true
   },
   {
-    "user_id": "如果你只需要一个钱包，就删除掉这个 {} 的所有内容，以及上一个 {} 末尾的,",
+    "user_id": "推特ID，如果你只需要一个钱包，就删除掉这个 {} 的所有内容，以及上一个 {} 末尾的,",
     "address": "你的钱包地址",
     "ifNoneMatch" : "钱包相对应的请求头",
     "authorization": "加密后或加密前的 authorization",
     "pk": "加密后或加密前的私钥",
-    "twitterToken": "推特 API token"
+    "useTwitterAPI": true
   }
 ]

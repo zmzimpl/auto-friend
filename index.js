@@ -6,7 +6,7 @@ import {
   sleep,
   logWork,
   decrypt,
-} from "./utils";
+} from "./utils/index.js";
 import consoleStamp from "console-stamp";
 import {
   createPublicClient,
@@ -25,18 +25,16 @@ import axios from "axios";
 import chalk from "chalk";
 import pkg from "lodash";
 import readlineSync from "readline-sync";
-import { couldBeSold, getMaxPrice } from "./strategy";
+import { couldBeSold, getMaxPrice } from "./strategy/index.js";
 import {
-  BOT_JUDGED_NONCE,
+  BuyStrategy,
   couldBeBought,
   isWhitelisted,
   shouldBuy,
-  shouldFetchBridgedAmount,
-  shouldFetchNonce,
   shouldFetchPrice,
   shouldFetchTwitterInfo,
-} from "./strategy/buy";
-import { shouldSell } from "./strategy/sell";
+} from "./strategy/buy.js";
+import { shouldSell } from "./strategy/sell.js";
 
 const { throttle } = pkg;
 
@@ -63,8 +61,6 @@ const websocketClient = createPublicClient({
   ),
 });
 const BASE_SCAN_API = "GWV3I6MRRIIDB1RA4UAIYAYGJ4KCGRR5ME";
-
-let bridgedAmountMap = {};
 
 const main = async (wallet) => {
   const client = createWalletClient({
@@ -116,6 +112,9 @@ const main = async (wallet) => {
         )
       );
       buying = false;
+      if (transaction.status === "success") {
+        await refreshHoldings();
+      }
     } catch (error) {
       buying = false;
       console.log("error", error.shortMessage);
@@ -135,9 +134,8 @@ const main = async (wallet) => {
         async (logs) => {
           await checkIfBuy(logs);
         },
-        process.env.twitterToken ? 10 : 2000
+        process.env.useTwitterAPI ? 0 : 5000
       ),
-      // 每 2 秒执行一次，因为频率太高，获取推特的关注人数方法会有问题() => checkIfBuy(logs)
     });
   };
 
@@ -154,25 +152,6 @@ const main = async (wallet) => {
     }
   };
 
-  const checkAndUpdateBotJSON = async (subject) => {
-    try {
-      // 读取 bot.json 文件
-      const data = await promises.readFile("bots.json", "utf8");
-      const botData = JSON.parse(data);
-
-      // 判断是否为数组并且 keyInfo.subject 是否已经存在其中
-      if (Array.isArray(botData) && !botData.includes(subject)) {
-        botData.push(subject);
-
-        // 写回更新后的数据
-        await promises.writeFile("bots.json", JSON.stringify(botData, null, 2));
-        console.log(`Added ${subject} to bots.json`);
-      }
-    } catch (error) {
-      console.error("Error updating bots.json:", error);
-    }
-  };
-
   const checkIfBuy = async (logs) => {
     if (buying) return;
     if (logs instanceof Array && logs.length > 0) {
@@ -184,13 +163,18 @@ const main = async (wallet) => {
 
           return (
             parseFloat(formatEther(log.args.ethAmount)) < maxBuyPrice &&
-            couldBeBought(log.args, bots)
+            couldBeBought(log.args, bots, holdings)
           );
         });
         for (const log of filterLogs) {
           const start = Date.now();
           const keyInfo = await fetchProfile(log.args.subject);
-          if (!keyInfo.username) continue;
+          if (!keyInfo.username) {
+            console.log(
+              chalk.yellow(log.args.subject, "无法在 friend 获取到信息，疑似幽灵账号，跳过...")
+            );
+            continue;
+          }
           const ethAmount = log.args.ethAmount;
           const previousETHPrice = parseFloat(formatEther(ethAmount));
           keyInfo.price = previousETHPrice;
@@ -200,27 +184,6 @@ const main = async (wallet) => {
           const whitelistedUser = isWhitelisted(keyInfo);
           // if not whitelisted
           if (!whitelistedUser) {
-            if (shouldFetchNonce()) {
-              accountInfo.nonce = await publicClient.getTransactionCount({
-                address: keyInfo.subject,
-              });
-              if (accountInfo.nonce > BOT_JUDGED_NONCE) {
-                console.log(`nonce: ${accountInfo.nonce}`);
-                bots.push(keyInfo.subject);
-                await checkAndUpdateBotJSON(keyInfo.subject);
-                continue;
-              }
-            }
-
-            if (shouldFetchBridgedAmount(accountInfo, keyInfo)) {
-              if (bridgedAmountMap[keyInfo.subject] !== undefined) {
-                accountInfo.bridgedAmount = bridgedAmountMap[keyInfo.subject];
-              } else {
-                accountInfo.bridgedAmount = bridgedAmountMap[keyInfo.subject] =
-                  await getBridgedAmount(keyInfo.subject);
-              }
-            }
-
             // if has twiiter conditions and other conditions all met
             if (shouldFetchTwitterInfo(accountInfo, keyInfo)) {
               let info;
@@ -231,6 +194,11 @@ const main = async (wallet) => {
                   keyInfo.username
                 );
               }
+              if (BuyStrategy.onlyBuyBlueVerified && !info.isBlueVerified) {
+                continue;
+              }
+              twitterInfo.viewAvg = info.viewAvg;
+              twitterInfo.favoriteAvg = info.favoriteAvg;
               twitterInfo.followers = info.followers_count;
               twitterInfo.posts = info.statuses_count;
               console.log(
@@ -305,7 +273,6 @@ const main = async (wallet) => {
 
   const freshNonce = async () => {
     // 顺便把占用内存的变量释放掉
-    bridgedAmountMap = {};
     twitterInfoMap = {};
     try {
       console.log("刷新 nonce...");
@@ -699,9 +666,7 @@ process.env.pw2 = password2;
 if (password1 && password2) {
   for (let index = 0; index < wallets.length; index++) {
     const wallet = wallets[index];
-    if (wallet.twitterToken) {
-      process.env.twitterToken = wallet.twitterToken;
-    }
+    process.env.useTwitterAPI = wallet.useTwitterAPI;
     main({
       ...wallet,
       pk: decrypt(wallet.pk, password1, password2),
