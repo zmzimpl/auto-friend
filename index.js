@@ -587,7 +587,7 @@ const main = async (wallet) => {
     }
   };
 
-  const trySell = async (share) => {
+  const trySell = async (share, calculator) => {
     const price = await getSellPrice(share.subject, share.balance);
     console.log(share.subject, share.name, "balance: ", share.balance);
     const ethPrice = parseFloat(formatEther(price).substring(0, 8)) * 0.9;
@@ -601,6 +601,13 @@ const main = async (wallet) => {
       )
     );
     const own = await checkIfOwn(share.subject);
+    calculator.sum += profit;
+    calculator.total += ethPrice;
+    if (profit > 0) {
+      calculator.positive += profit;
+    } else {
+      calculator.negative += profit;
+    }
     if (!own) {
       return false;
     }
@@ -630,15 +637,17 @@ const main = async (wallet) => {
     while (buying) {
       await sleep(1);
     }
+    const calculator = { sum: 0, positive: 0, negative: 0, total: 0 };
     for (let index = 0; index < holdings.length; index++) {
       selling = true;
       const share = holdings[index];
-      const sold = await trySell(share);
+      const sold = await trySell(share, calculator);
       if (sold) {
         index = index - 1;
       }
     }
     selling = false;
+    console.log(chalk.cyan(JSON.stringify(calculator)));
     // 如果去取消了购买轮询，要重新启用
     if (unwatched) {
       await watchContractTradeEvent();
