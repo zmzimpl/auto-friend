@@ -250,7 +250,10 @@ const main = async (wallet) => {
         const username = res.data?.twitterUsername;
         if (!username) {
           console.log(
-            chalk.yellow(subject, "无法在 friend 获取到信息，疑似幽灵账号，跳过...")
+            chalk.yellow(
+              subject,
+              "无法在 friend 获取到信息，疑似幽灵账号，跳过..."
+            )
           );
           return {};
         }
@@ -263,6 +266,12 @@ const main = async (wallet) => {
           await sleep(1);
           return await fetchProfile(subject, count + 1);
         } else {
+          console.log(
+            chalk.yellow(
+              subject,
+              "无法在 friend 获取到信息，疑似幽灵账号，跳过..."
+            )
+          );
           return {};
         }
       }
