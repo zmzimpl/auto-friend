@@ -259,11 +259,16 @@ const main = async (wallet) => {
           username,
         };
       } else {
-        return {};
+        if (count < 2) {
+          await sleep(1);
+          return await fetchProfile(subject, count + 1);
+        } else {
+          return {};
+        }
       }
     } catch (error) {
       if (error.message.includes("404") && count < 2) {
-        await sleep(2);
+        await sleep(1);
         return await fetchProfile(subject, count + 1);
       }
       return {};

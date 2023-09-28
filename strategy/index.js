@@ -5,5 +5,5 @@ export {
   getMaxPrice,
   couldBeBought,
   BOT_JUDGED_NONCE,
-} from "./buy";
-export { couldBeSold, shouldSell } from "./sell";
+} from "./buy.js";
+export { couldBeSold, shouldSell } from "./sell.js";

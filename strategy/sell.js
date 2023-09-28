@@ -1,4 +1,4 @@
-import { STRATEGY_OPERATORS, STRATEGY_TYPES } from "../constants";
+import { STRATEGY_OPERATORS, STRATEGY_TYPES } from "../constants/index.js";
 
 /**
  * 卖出策略
