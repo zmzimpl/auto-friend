@@ -170,9 +170,6 @@ const main = async (wallet) => {
           const start = Date.now();
           const keyInfo = await fetchProfile(log.args.subject);
           if (!keyInfo.username) {
-            console.log(
-              chalk.yellow(log.args.subject, "无法在 friend 获取到信息，疑似幽灵账号，跳过...")
-            );
             continue;
           }
           const ethAmount = log.args.ethAmount;
@@ -252,7 +249,9 @@ const main = async (wallet) => {
       if (res.data?.id) {
         const username = res.data?.twitterUsername;
         if (!username) {
-          console.log("no twitter username, skip");
+          console.log(
+            chalk.yellow(subject, "无法在 friend 获取到信息，疑似幽灵账号，跳过...")
+          );
           return {};
         }
         return {
