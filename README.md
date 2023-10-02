@@ -82,7 +82,8 @@ if (password1 && password2) {
 
 ```js
   for (let index = 0; index < wallets.length; index++) {
-      const wallet = wallets[index];
+    const wallet = wallets[index];
+    process.env.useTwitterAPI = wallet.useTwitterAPI;
     main({
         ...wallet,
     });
@@ -268,6 +269,9 @@ const notSellList = [];
         ),
     });
     ```
+    
+    如果使用了自定义的 rpc 依然一直在刷新 Nonce，可能和你本地 node 环境有关，尝试在刷新 Nonce 的函数中打印错误，如果是 fetch 找不到，则在 /node_modules/viem/_esm/utils/rpc.js 找到 rpc.js 文件，在顶部增加代码
+    `import fetch from 'node-fetch';`
 
 3. 出现了比如以下找不到 chrome, 版本对不上的错误，请更新你的 chrome 版本
 
