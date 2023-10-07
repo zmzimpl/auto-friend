@@ -529,10 +529,15 @@ const main = async (wallet) => {
   };
 
   const getSellPrice = async (subjectAddress, amount = 1) => {
-    const price = await contract.read.getSellPriceAfterFee({
-      args: [subjectAddress, amount],
-    });
-    return price;
+    try {
+      const price = await contract.read.getSellPriceAfterFee({
+        args: [subjectAddress, amount],
+      });
+      return price;
+    } catch (error) {
+      console.log(error.message);
+      return null;
+    }
   };
 
   const checkIfOwn = async (subjectAddress) => {
@@ -589,6 +594,9 @@ const main = async (wallet) => {
 
   const trySell = async (share, calculator) => {
     const price = await getSellPrice(share.subject, share.balance);
+    if (!price) {
+      return;
+    }
     console.log(share.subject, share.name, "balance: ", share.balance);
     const ethPrice = parseFloat(formatEther(price).substring(0, 8)) * 0.9;
     const costEthPrice = parseFloat(formatEther(share.cost).substring(0, 8));
